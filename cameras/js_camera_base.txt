@@ -1,0 +1,32 @@
+{
+    
+	"Width": {
+	        "__info": "camera x-resolution",
+        	"__def": 640,
+        	"__min": 1,
+		"__max": 4000
+	},
+	"Height": {
+	        "__info": "camera y-resolution",
+        	"__def": 480,
+        	"__min": 1,
+		"__max": 3000
+	},
+	"Gamma": {
+	        "__info": "nonlinear correction",
+        	"__def": 1,
+        	"__min": 1
+	},
+	"Gain": {
+	        "__info": "analog gain on dB / automatic",
+        	"__def": "auto",
+        	"__min": 0.0,
+		"automatic": "auto"
+	},
+	"Exposition": {
+	        "__info": "exposure in us / automatic",
+        	"__def": "auto",
+        	"__min": 0.0,
+		"automatic": "auto"
+	}
+ }
