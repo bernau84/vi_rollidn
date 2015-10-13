@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -13,11 +13,7 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
-    i_proc_stage.cpp \
-    t_vi_proc_colortransf.cpp \
-    t_vi_proc_threshold.cpp \
-    t_vi_proc_contours.cpp
+        mainwindow.cpp
 
 HEADERS  += mainwindow.h \
     i_proc_stage.h \
