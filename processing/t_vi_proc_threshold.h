@@ -41,7 +41,7 @@ public slots:
         return 1;
     }
 
-    ~t_vi_proc_threshold();
+    ~t_vi_proc_threshold(){;}
 };
 
 #endif // T_VI_PROC_THRESHOLD_H

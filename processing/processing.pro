@@ -6,16 +6,15 @@
 
 QT       += core
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+CONFIG   += console
+CONFIG   -= app_bundle
 
 TARGET = processing
 TEMPLATE = app
 
+SOURCES += main.cpp
 
-SOURCES += main.cpp\
-        mainwindow.cpp
-
-HEADERS  += mainwindow.h \
+HEADERS  += \
     i_proc_stage.h \
     ../t_vi_setup.h \
     t_vi_proc_colortransf.h \
@@ -31,4 +30,3 @@ LIBS += -L"C:\\opencv\\build\\x86\\vc10\\lib" \
     -lopencv_features2d2410d \
     -lopencv_calib3d2410d
 
-FORMS    += mainwindow.ui

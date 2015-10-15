@@ -37,7 +37,7 @@ public slots:
         Mat drawing = Mat::zeros( src->size(), CV_8UC3 );
         vector<RotatedRect> minRect( contours.size() );
 
-        for( int i = 0; i < contours.size(); i++ )
+        for( unsigned i = 0; i < contours.size(); i++ )
            {
              if(contourArea(contours[i]) > 100){
 
@@ -74,7 +74,7 @@ public slots:
         return 1;
     }
 
-    ~t_vi_proc_contours();
+    ~t_vi_proc_contours(){;}
 };
 
 #endif // T_VI_PROC_CONTOURS_H

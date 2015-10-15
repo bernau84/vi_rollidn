@@ -35,7 +35,7 @@ public slots:
         return 1;
     }
 
-    ~t_vi_proc_colortransf();
+    ~t_vi_proc_colortransf(){;}
 };
 
 #endif // T_VI_PROC_COLORTRANSF_H

@@ -26,7 +26,7 @@ public:
         js_config = js_config; /*! \todo init collection from file */
     }
 
-    ~i_proc_stage();
+    virtual ~i_proc_stage(){;}
 };
 
 #endif // I_PROC_STAGE_H
