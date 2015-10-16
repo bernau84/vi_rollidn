@@ -1,0 +1,38 @@
+
+1. nastavimn si ROI na horni tretinu / pokud nebude fungovat tak musim vymaskovat do noveho obrazku
+2. vybeneruji body pomoci findNonZero
+3. prolozim primkou - odectu Y1
+4. - 6. to same pro spodni tretuni -> Y2
+7. mezi Y1 a Y2 v leve polovine provedu findNonZero
+8. prepocitam souradnice do elipticke rovnice
+9. dalsi fitLine a mam stred a kratsi prumer elipsy - X1
+10. - 12. opakuji 7 - 9 pro pravou polovinu -> X2
+11. odeslu X2 + X1 a mam to i subpixlove
+
+
+----------------------------------------------------------------------------
+std::vector<cv::Point2i> locations;   // output, locations of non-zero pixels 
+cv::findNonZero(binaryImage, locations);
+
+cv::Mat binaryImage; // input, binary image
+vector<Point> locations;   // output, locations of non-zero pixels
+cv::findNonZero(binaryImage, locations);
+// access pixel coordinates
+Point pnt = locations[i];
+
+----------------------------------------------------------------------------
+// You mention that you start with a CVMat* imagesource
+CVMat * imagesource;
+
+// Transform it into the C++ cv::Mat format
+cv::Mat image(imagesource); 
+
+// Setup a rectangle to define your region of interest
+cv::Rect myROI(10, 10, 100, 100);
+
+// Crop the full image to that image contained by the rectangle myROI
+// Note that this doesn't copy the data
+cv::Mat croppedImage = image(myROI);
+
+
+--------------------------------------------------------
