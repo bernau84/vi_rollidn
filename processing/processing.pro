@@ -30,3 +30,11 @@ LIBS += -L"C:\\opencv\\build\\x86\\vc10\\lib" \
     -lopencv_features2d2410d \
     -lopencv_calib3d2410d
 
+DISTFILES += \
+    js_config_cylinder_approx.txt \
+    js_config_roi_colortransf.txt \
+    js_config_threshold_cont.txt
+
+RESOURCES += \
+    defaults.qrc
+

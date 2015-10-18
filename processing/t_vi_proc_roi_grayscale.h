@@ -18,13 +18,18 @@ private:
     cv::Rect roi;
 
 public:
-    t_vi_proc_colortransf(QString &path = QString("js_config_colortransf.txt")):
+    t_vi_proc_colortransf(QString &path = QString(":/defaults/js_config_roi_colortransf.txt")):
         i_proc_stage(path)
     {
-        roi.x = 0;   //to do - from collection
-        roi.y = 0;
-        roi.width = 0;
-        roi.height = 0;
+
+        roi.x = roi.y = roi.width = roi.height = 0;
+
+        roi.x = par["ROI-centerX"].get().toInt();   //from collection
+        roi.y = par["ROI-centerY"].get().toInt();
+        roi.width = par["ROI-width"].get().toInt();
+        roi.height = par["ROI-height"].get().toInt();
+
+        qDebug() << "ColorTr & ROI import setup:" << roi.x << roi.y << roi.width << roi.height;
     }
 
 public slots:

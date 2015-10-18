@@ -23,13 +23,19 @@ private:
     int min_contour_area;
 
 public:
-    t_vi_proc_threshold(QString &path =  QString("js_config_threshold.txt")):
+    t_vi_proc_threshold(QString &path =  QString(":/defaults/js_config_threshold_cont.txt")):
         i_proc_stage(path)
     {
 
         thresh = 75;    /*! \todo - from collection */
         max_thresh = 255;
         min_contour_area = 100;
+
+        thresh = par["threshold_positive"].get().toInt();
+        max_thresh = par["threshold_binaryval"].get().toInt();
+        min_contour_area = par["contour_minimal"].get().toInt();
+
+        qDebug() << "Threshold & contours setup:" << thresh << max_thresh << min_contour_area;
     }
 
 public slots:
