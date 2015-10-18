@@ -1,7 +1,7 @@
 {
 	"threshold_positive": {
 	        "__info": "threshold",
-        	"__def": 127,
+                "__def": 75,
         	"__min": 1,
         	"__max": 255
 	},
@@ -14,6 +14,6 @@
 	"contour_minimal": {
 	        "__info": "valid countour area",
         	"__def": 100,
-        	"__min": 1,
+                "__min": 1
 	}
  }

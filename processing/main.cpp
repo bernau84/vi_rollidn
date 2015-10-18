@@ -23,8 +23,8 @@ int main(int argc, char *argv[])
     t_vi_proc_threshold th;
     t_vi_proc_roll_approx ms;
 
-    QObject::connect(&ct, SIGNAL(next(int, void *)), &th, SLOT(proc(int, void *)));
-    QObject::connect(&th, SIGNAL(next(int, void *)), &ms, SLOT(proc(int, void *)));
+//    QObject::connect(&ct, SIGNAL(next(int, void *)), &th, SLOT(proc(int, void *)));
+//    QObject::connect(&th, SIGNAL(next(int, void *)), &ms, SLOT(proc(int, void *)));
 
     ct.proc(0, &src);
 

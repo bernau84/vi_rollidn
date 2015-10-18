@@ -20,9 +20,13 @@ private:
         if(f_def.open(QIODevice::ReadOnly | QIODevice::Text)){
 
             QByteArray f_data = f_def.read(64000);
+
             QJsonDocument js_doc = QJsonDocument::fromJson(f_data);
-            if(!js_doc.isEmpty())
+            if(!js_doc.isEmpty()){
+
+                qDebug() << js_doc.toJson();
                 return js_doc.object();
+            }
         }
 
         return QJsonObject();

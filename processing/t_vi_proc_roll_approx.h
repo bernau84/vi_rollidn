@@ -105,7 +105,7 @@ private:
     }
 
 public:
-    t_vi_proc_roll_approx(QString &path = QString(":/defaults/js_config_cylinder_approx.txt")):
+    t_vi_proc_roll_approx(QString &path = QString(":/js_config_cylinder_approx.txt")):
         i_proc_stage(path)
     {
 
