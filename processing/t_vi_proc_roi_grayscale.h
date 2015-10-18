@@ -13,11 +13,18 @@ using namespace std;
 
 class t_vi_proc_colortransf : public i_proc_stage
 {
+private:
+    Mat out;
+    cv::Rect roi;
+
 public:
     t_vi_proc_colortransf(QString &path = QString("js_config_colortransf.txt")):
         i_proc_stage(path)
     {
-
+        roi.x = 0;   //to do - from collection
+        roi.y = 0;
+        roi.width = 0;
+        roi.height = 0;
     }
 
 public slots:
@@ -25,13 +32,18 @@ public slots:
 
         p1 = p1;
         Mat *src = (Mat *)p2;
-        Mat out;
 
         ///Convert image to gray
         cv::cvtColor(*src, out, CV_BGR2GRAY);
-        *src = out;
 
-        emit next(1, src);
+        ///ROI
+        if(roi.width && roi.height){
+
+            Mat cropped = out(roi);
+            out = cropped.clone();   //deep copy
+        }
+
+        emit next(1, &out);
         return 1;
     }
 

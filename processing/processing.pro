@@ -17,9 +17,9 @@ SOURCES += main.cpp
 HEADERS  += \
     i_proc_stage.h \
     ../t_vi_setup.h \
-    t_vi_proc_colortransf.h \
-    t_vi_proc_threshold.h \
-    t_vi_proc_contours.h
+    t_vi_proc_roi_grayscale.h \
+    t_vi_proc_threshold_cont.h \
+    t_vi_proc_roll_approx.h
 
 INCLUDEPATH += "C:\\opencv\\build\\include"
 
