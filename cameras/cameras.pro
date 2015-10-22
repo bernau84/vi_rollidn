@@ -4,13 +4,10 @@
 #
 #-------------------------------------------------
 
-QT       += core
-QT       += gui
+QT       += core gui
 QT       += widgets
 
 TARGET = cameras
-CONFIG   += console
-CONFIG   -= app_bundle
 
 TEMPLATE = app
 
@@ -20,9 +17,7 @@ INCLUDEPATH += "c:\Program Files\Basler\pylon 4\genicam\library\CPP\include"
 LIBS += -L"c:\Program Files\Basler\pylon 4\pylon\lib\Win32"
 LIBS += -L"c:\Program Files\Basler\pylon 4\genicam\library\CPP\Lib\Win32_i86"
 
-SOURCES += main.cpp \
-    basler/t_vi_camera_basler_usb.cpp \
-    offline/t_vi_camera_offline_file.cpp
+SOURCES += main.cpp
 
 HEADERS += \
     i_camera_base.h \

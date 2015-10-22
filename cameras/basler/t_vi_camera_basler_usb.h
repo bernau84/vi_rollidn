@@ -57,11 +57,12 @@ public:
                     cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << endl << endl;
 
                     /*! \todo - memcpy to img */
+                    if(img);
 
-#if define PYLON_WIN_BUILD && define QT_DEBUG
+//#if define PYLON_WIN_BUILD && define QT_DEBUG
                     // Display the grabbed image.
                     Pylon::DisplayImage(1, ptrGrabResult);
-#endif
+//#endif
                 }
                 else
                 {

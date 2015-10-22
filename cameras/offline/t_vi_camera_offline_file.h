@@ -11,14 +11,11 @@ public:
 
     int snap(void *img, unsigned free){
 
-        QString picName = QFileDialog::getOpenFileName(this,
-            tr("Open Image"), "", tr("Image Files (*.png *.jpg *.bmp)"));
-
+        QString picName = QFileDialog::getOpenFileName(NULL, "Open Image", "", "Image Files (*.png *.jpg *.bmp)");
         if(picName.isNull())
             return 0;
 
         QImage picFile(picName);
-
         if(picFile.isNull())
             return 0;
 
@@ -29,12 +26,17 @@ public:
         if(ret > free)
             return -1;
 
-        memcpy(img, picFile.constBits(), ret);
+        if(img)
+            memcpy(img, picFile.constBits(), ret);
+
         return ret;
     }
 
-    t_vi_camera_offline_file();
-    ~t_vi_camera_offline_file();
+    t_vi_camera_offline_file(){
+    }
+
+    ~t_vi_camera_offline_file(){
+    }
 };
 
 #endif // T_VI_CAMERA_OFFLINE_FILE_H
