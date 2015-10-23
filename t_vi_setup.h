@@ -192,7 +192,7 @@ public:
  * a tak to chcem multiplatformni
  */
 
-class t_collection : public QObject, private QJsonObject {
+class t_collection : public QObject, protected QJsonObject {
 
     Q_OBJECT
 signals:
@@ -236,7 +236,7 @@ public:
 
     /*! \brief create empty one
      */
-    explicit t_collection(QObject *parent = 0):
+    t_collection(QObject *parent = 0):
         QObject(parent), QJsonObject(){
 
     }
@@ -245,6 +245,10 @@ public:
      */
     explicit t_collection(const QJsonObject &def):
         QObject(0), QJsonObject(def){
+
+    }
+
+    ~t_collection(){
 
     }
 };

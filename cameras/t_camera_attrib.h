@@ -10,9 +10,8 @@ class t_vi_camera_attrib : public t_collection {
 
 private:
 
-    /*
     //constructor helpers
-    QJsonObject __set_from_fileX(const QString &path){
+    QJsonObject __set_from_file(const QString &path){
 
         // default config
         QFile f_def(path);  //from resources
@@ -26,11 +25,11 @@ private:
 
         return QJsonObject();
     }
-    */
+
 
 public:
     t_vi_camera_attrib(const QString &path = "js_camera_base.txt"):
-        t_collection() //t_collection(__set_from_file(path))
+        t_collection(__set_from_file(path))
     {
 
     }

@@ -9,7 +9,7 @@ class t_vi_camera_offline_file : public i_vi_camera_base
 {
 public:
 
-    int snap(void *img, unsigned free){
+    int snap(void *img, unsigned free, i_vi_camera_base::t_campic_info *info){
 
         QString picName = QFileDialog::getOpenFileName(NULL, "Open Image", "", "Image Files (*.png *.jpg *.bmp)");
         if(picName.isNull())
@@ -19,17 +19,16 @@ public:
         if(picFile.isNull())
             return 0;
 
-        /*! \todo convertToFormat() according to setup +
-         * imprint width & height back to setup */
-
         int ret = picFile.byteCount();
         if(ret > free)
             return -1;
 
-        if(img)
-            memcpy(img, picFile.constBits(), ret);
+        qDebug() << "file-pic-size:" << ret <<
+                    "file-pic-x:" << picFile.width() <<
+                    "file-pic-y:" << picFile.height();
 
-        return ret;
+        /*! convertToFormat() according to setup */
+        return convertf(picFile, img, free, info);
     }
 
     t_vi_camera_offline_file(){

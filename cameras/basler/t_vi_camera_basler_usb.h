@@ -30,10 +30,23 @@ public:
         // Automagically call PylonInitialize and PylonTerminate to ensure the pylon runtime system
         // is initialized during the lifetime of this object.
         Pylon::PylonAutoInitTerm autoInitTerm;  /*! nevim tedy k cemu */
+
+
+        QString mode = par["General"].toString();
+        if(mode.compare("MANUAL")){
+
+            /*! \todo imprint setup to camera
+                par["Width"]
+                par["Height"]
+                par["Gain"]
+                par["Exposition"]
+            */
+        }
+
         return 0;
     }
 
-    int snap(void *img, unsigned free){
+    int snap(void *img, unsigned free, t_campic_info *info){
 
         try
         {
@@ -51,18 +64,29 @@ public:
                 if (ptrGrabResult->GrabSucceeded())
                 {
                     // Access the image data.
-                    cout << "SizeX: " << ptrGrabResult->GetWidth() << endl;
-                    cout << "SizeY: " << ptrGrabResult->GetHeight() << endl;
+                    cout << "basler-pic-x: " << ptrGrabResult->GetWidth() << endl;
+                    cout << "basler-pic-y: " << ptrGrabResult->GetHeight() << endl;
                     const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
-                    cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << endl << endl;
-
-                    /*! \todo - memcpy to img */
-                    if(img);
 
 //#if define PYLON_WIN_BUILD && define QT_DEBUG
                     // Display the grabbed image.
                     Pylon::DisplayImage(1, ptrGrabResult);
 //#endif
+
+                    QImage src;
+                    switch(ptrGrabResult->pixelType){
+
+                        case PixelType_Mono8:
+                            src = QImage::fromData(pImageBuffer,
+                                                   ptrGrabResult->GetWidth()*ptrGrabResult->GetWidth(),
+                                                   QImage::Format_Indexed8);
+                        break;
+                        default:
+                            return -1;
+                        break;
+                    }
+
+                    return convertf(src, img, free, info);
                 }
                 else
                 {
@@ -79,7 +103,7 @@ public:
             return -1;
         }
 
-        return 1;
+        return 0;
     }
 
     t_vi_camera_basler_usb():

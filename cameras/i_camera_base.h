@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include "t_camera_attrib.h"
 
+#include <QImage>
+
 using namespace std;
 
 class i_vi_camera_base {
@@ -17,6 +19,13 @@ protected:
         CAMSTA_INPROC,
         CAMSTA_ERROR
     } sta;
+
+    struct t_campic_info {
+
+        unsigned h;
+        unsigned w;
+        unsigned format;
+    };
 
     t_vi_camera_attrib par;     //camera attributes
 
@@ -36,6 +45,42 @@ protected:
         return val.get();
     }
 
+    int convertf(QImage &src, void *img, unsigned free, t_campic_info *info){
+
+        int ret = 0;
+        QImage dest;
+
+        QString f = par["Format"].toString();  //pozadovany format
+        if(0 == f.compare("8bMONO")){
+
+            dest = src.convertToFormat(QImage::Format_Indexed8);
+        } else if(0 == f.compare("32bRGB")){
+
+            dest = src.convertToFormat(QImage::Format_RGB32);
+        } //else - beze zmeny - jek to prekopiruju
+
+        if(free < (ret = dest.byteCount())) //nemame dostatecny prostor
+            return -ret;
+
+        if(img){
+
+            memcpy(img, picFile.constBits(), ret);
+        }
+
+        /*! \todo - anotrher transformation postprocess
+         * roi & contrast etc according to manual settup (if choosen)
+         */
+
+        if(info){
+
+            info->format = (unsigned)src.format();
+            info->w = src.width();
+            info->h = src.height();
+        }
+
+        return ret;  //povedlo se
+    }
+
 
 public:
     /*! \brief before fist grab / for reset do original state */
@@ -45,7 +90,7 @@ public:
     }
 
     /*! \brief picture acquisition according to current t_vi_camera_attrib */
-    virtual int snap(void *img, unsigned free) = 0;
+    virtual int snap(void *img, unsigned free, t_campic_info *info = NULL) = 0;
 
 
     /*! \brief return camera status */

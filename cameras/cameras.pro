@@ -26,4 +26,7 @@ HEADERS += \
     basler/t_vi_camera_basler_usb.h \
     offline/t_vi_camera_offline_file.h
 
+DISTFILES += \
+    js_camera_base.txt
+
 
