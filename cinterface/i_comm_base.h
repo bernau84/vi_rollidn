@@ -6,10 +6,10 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
+#include <QDebug>
 
-#include "t_vi_command_parser.h"
-
-using namespace std;
+#include "t_comm_parser.h"
 
 class i_vi_comm_base : public QObject,  t_vi_comm_parser {
 
@@ -34,7 +34,7 @@ public:
         QString ret = QString("OK");
         if(code) ret += QString(" %1").arg(code);
         ret += "\r\n";
-        on_write(ret);
+        on_write(ret.toLatin1());
     }
 
     void on_error(int code = 0, QString info = QString()){
@@ -43,12 +43,12 @@ public:
         if(code) ret += QString(" %1").arg(code);
         if(info.isEmpty() == false) ret += QString(", \"%2\"").arg(info);
         ret += "\r\n";
-        on_write(ret);
+        on_write(ret.toLatin1());
     }
 
-    void on_answer_or_command(QByteArray &cmd){
+    void on_answer_or_command(QString &cmd){
 
-        on_write(cmd);
+        on_write(cmd.toLatin1());
     }
 
     int refresh(){
@@ -61,17 +61,16 @@ public:
         if(dt.isEmpty() == false)
             if((ret = feed(dt.constData(), dt.length())) >= 0){
 
-                callback(ret, QString(parser.get_parameteres()));
+                callback(ret, QString(get_parameters().c_str()));
                 return ret;
             }
 
         return -1;
     }
 
-    virtual callback(unsigned ord, QString par){
+    virtual void callback(unsigned ord, QString par){
 
-        ord = ord;
-        par = par;
+        qDebug() << "ord(" << QString::number(ord) << ")" << par;
     }
 
 signals:
@@ -83,7 +82,7 @@ public:
         t_vi_comm_parser()
     {
         for(int i=0; i<orders.size(); i++)
-            this->reg_command(orders[i].toStdString());
+            this->reg_command(orders[i].toStdString().c_str());
 
         sta = COMMSTA_UNKNOWN;
     }
@@ -91,7 +90,7 @@ public:
     virtual ~i_vi_comm_base(){
 
     }
-}
+};
 
 #endif // I_COMMUNICATION_BASE
 

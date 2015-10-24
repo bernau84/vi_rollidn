@@ -2,11 +2,12 @@
 #define T_VII_COMMAND_PARSER
 
 #include <stdint.h>
+#include <string.h>
 
 class t_vi_comm_parser {
 
 private:
-    std::list<const char *> orders;
+    std::vector<const char *> orders;
     std::string line;
     std::string last_par;
     std::string last_ord;
@@ -15,19 +16,19 @@ public:
     //nova data pro parser - hleda povely ve streamu dat
     //a generuje signal pokud najdem
     //povel musi byt ukoncem <CR> nebo <LF> nebo oboji
-    int feed(uint8_t *p, unsigned len){
+    int feed(const char *p, unsigned len){
 
         while(*p && len){
 
             if((*p == '\r') || (*p == '\n')){
 
-                for(int i=0; i<orders.size(); i++){
+                for(unsigned i=0; i<orders.size(); i++){
 
                     int sz = strlen(orders[i]);
-                    if(0 == memcmp(orders[i], line.constData(), sz)){
+                    if(0 == memcmp(orders[i], line.c_str(), sz)){
 
                         last_ord = std::string(orders[i]);
-                        last_par = line.substr(sz, line.lenght() - sz);
+                        last_par = line.substr(sz, line.length()  - sz);
 
                         line.erase();
                         return i;
@@ -44,6 +45,8 @@ public:
             p += 1;
             len -= 1;
         }
+
+        return -2;
     }
 
     //vraci adekvatni string posledniho povelu
@@ -53,7 +56,7 @@ public:
     }
 
     //vraci parametry posledniho povelu
-    std::string get_parameteres(){
+    std::string get_parameters(){
 
         return last_par;
     }
@@ -61,11 +64,11 @@ public:
     //vraci kod pro registrovany povel
     unsigned reg_command(const char *ord){
 
-        orders.append(ord);
+        orders.push_back(ord);
         return orders.size();
     }
 
-    t_vi_comm_parser(std::list<const char *> &set):
+    t_vi_comm_parser(std::vector<const char *> &set):
         orders(set)
     {
     }
@@ -77,7 +80,7 @@ public:
     ~t_vi_comm_parser()
     {
     }
-}
+};
 
 #endif // T_VII_COMMAND_PARSER
 

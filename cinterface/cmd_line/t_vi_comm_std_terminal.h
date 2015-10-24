@@ -1,8 +1,10 @@
 #ifndef T_VI_COMM_STD_TERMINAL
 #define T_VI_COMM_STD_TERMINAL
 
-#include "../i_communication_base.h"
+#include "../i_comm_base.h"
 #include "../../t_vi_setup.h"
+
+#include <iostream>
 
 class t_vi_comm_std_terminal : public i_vi_comm_base {
 

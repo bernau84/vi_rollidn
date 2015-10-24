@@ -8,7 +8,8 @@ int main(int argc, char *argv[])
     QStringList supported;
     supported << "START" << "STOP";
 
-    t_vi_comm_std_terminal term(supported);
+    t_vi_comm_std_terminal term(NULL, supported);
+    term.refresh();
 
     return a.exec();
 }
