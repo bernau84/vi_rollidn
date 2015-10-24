@@ -29,4 +29,4 @@ HEADERS += \
 DISTFILES += \
     js_camera_base.txt
 
-
+DEFINES += USE_USB

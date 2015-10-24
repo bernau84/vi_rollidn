@@ -9,7 +9,7 @@ class t_vi_camera_offline_file : public i_vi_camera_base
 {
 public:
 
-    int snap(void *img, unsigned free, i_vi_camera_base::t_campic_info *info){
+    int snap(void *img, unsigned free, i_vi_camera_base::t_campic_info *info = NULL){
 
         QString picName = QFileDialog::getOpenFileName(NULL, "Open Image", "", "Image Files (*.png *.jpg *.bmp)");
         if(picName.isNull())
@@ -20,7 +20,7 @@ public:
             return 0;
 
         int ret = picFile.byteCount();
-        if(ret > free)
+        if(ret > (int)free)
             return -1;
 
         qDebug() << "file-pic-size:" << ret <<

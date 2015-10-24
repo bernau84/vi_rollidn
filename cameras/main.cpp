@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
     //dev.snap(NULL, 0);
 
     t_vi_camera_offline_file simul;
-    simul.snap(NULL, 0);
+    simul.snap(NULL, 0, NULL);
 
     return a.exec();
 }

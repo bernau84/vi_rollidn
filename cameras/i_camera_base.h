@@ -50,7 +50,7 @@ protected:
         int ret = 0;
         QImage dest;
 
-        QString f = par["Format"].toString();  //pozadovany format
+        QString f = par["Format"].get().toString();  //pozadovany format
         if(0 == f.compare("8bMONO")){
 
             dest = src.convertToFormat(QImage::Format_Indexed8);
@@ -59,12 +59,12 @@ protected:
             dest = src.convertToFormat(QImage::Format_RGB32);
         } //else - beze zmeny - jek to prekopiruju
 
-        if(free < (ret = dest.byteCount())) //nemame dostatecny prostor
+        if((int)free < (ret = dest.byteCount())) //nemame dostatecny prostor
             return -ret;
 
         if(img){
 
-            memcpy(img, picFile.constBits(), ret);
+            memcpy(img, src.constBits(), ret);
         }
 
         /*! \todo - anotrher transformation postprocess

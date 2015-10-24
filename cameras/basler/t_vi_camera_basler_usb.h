@@ -12,10 +12,37 @@
 // Namespace for using pylon objects.
 using namespace Pylon;
 
+#if defined( USE_1394 )
+// Setting for using  Basler IEEE 1394 cameras.
+#include <pylon/1394/Basler1394InstantCamera.h>
+typedef Pylon::CBasler1394InstantCamera Camera_t;
+using namespace Basler_IIDC1394CameraParams;
+#elif defined ( USE_GIGE )
+// Setting for using Basler GigE cameras.
+#include <pylon/gige/BaslerGigEInstantCamera.h>
+typedef Pylon::CBaslerGigEInstantCamera Camera_t;
+using namespace Basler_GigECameraParams;
+#elif defined ( USE_CAMERALINK )
+// Setting for using Basler Camera Link cameras.
+#include <pylon/cameralink/BaslerCameraLinkInstantCamera.h>
+typedef Pylon::CBaslerCameraLinkInstantCamera Camera_t;
+using namespace Basler_CLCameraParams;
+#elif defined ( USE_USB )
+// Setting for using Basler USB cameras.
+#include <pylon/usb/BaslerUsbInstantCamera.h>
+using namespace Basler_UsbCameraParams;
+#else
+#error Camera type is not specified. For example, define USE_GIGE for using GigE cameras.
+#endif
+
 class t_vi_camera_basler_usb : public i_vi_camera_base
 {
 private:
-    CInstantCamera camera;
+    CBaslerUsbInstantCamera camera;
+
+    // Automagically call PylonInitialize and PylonTerminate to ensure the pylon runtime system
+    // is initialized during the lifetime of this object.
+    Pylon::PylonAutoInitTerm autoInitTerm;  /*! nevim tedy k cemu */
 
 public:
 
@@ -27,12 +54,7 @@ public:
             return -1;
         }
 
-        // Automagically call PylonInitialize and PylonTerminate to ensure the pylon runtime system
-        // is initialized during the lifetime of this object.
-        Pylon::PylonAutoInitTerm autoInitTerm;  /*! nevim tedy k cemu */
-
-
-        QString mode = par["General"].toString();
+        QString mode = par["General"].get().toString();
         if(mode.compare("MANUAL")){
 
             /*! \todo imprint setup to camera
@@ -43,13 +65,22 @@ public:
             */
         }
 
+        sta = CAMSTA_PREPARED;
         return 0;
     }
 
-    int snap(void *img, unsigned free, t_campic_info *info){
+    int snap(void *img, unsigned free, t_campic_info *info = NULL){
+
+        if(sta != CAMSTA_PREPARED)
+            return -1;
 
         try
         {
+
+            //Loading user set 1 settings
+            camera.UserSetSelector.SetValue(UserSetSelector_UserSet1);
+            camera.UserSetLoad.Execute();
+
             camera.StartGrabbing(1);
 
             // This smart pointer will receive the grab result data.
@@ -74,15 +105,14 @@ public:
 //#endif
 
                     QImage src;
-                    switch(ptrGrabResult->pixelType){
+                    switch(ptrGrabResult->GetPixelType()){
 
                         case PixelType_Mono8:
-                            src = QImage::fromData(pImageBuffer,
-                                                   ptrGrabResult->GetWidth()*ptrGrabResult->GetWidth(),
+                            src = QImage(pImageBuffer, ptrGrabResult->GetWidth(), ptrGrabResult->GetWidth(),
                                                    QImage::Format_Indexed8);
                         break;
-                        default:
-                            return -1;
+                        default:   //dodelat podporu rgb pokud bude potreba, bayerovych masek respektive
+                            return -101;
                         break;
                     }
 
@@ -100,7 +130,7 @@ public:
             // Error handling.
             cerr << "An exception occurred." << endl
             << e.GetDescription() << endl;
-            return -1;
+            return -102;
         }
 
         return 0;
