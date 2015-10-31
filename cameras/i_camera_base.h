@@ -11,7 +11,7 @@ using namespace std;
 
 class i_vi_camera_base {
 
-protected:
+public:
     enum e_camsta {
 
         CAMSTA_UNKNOWN = 0,
@@ -27,6 +27,7 @@ protected:
         unsigned format;
     };
 
+protected:
     t_vi_camera_attrib par;     //camera attributes
 
     /*! \brief setup collection io, read for empty/default val */
@@ -57,14 +58,18 @@ protected:
         } else if(0 == f.compare("32bRGB")){
 
             dest = src.convertToFormat(QImage::Format_RGB32);
-        } //else - beze zmeny - jek to prekopiruju
+        } else { //beze zmeny - jek to prekopiruju
+
+            dest = src;
+        }
 
         if((int)free < (ret = dest.byteCount())) //nemame dostatecny prostor
             return -ret;
 
         if(img){
 
-            memcpy(img, src.constBits(), ret);
+            const uchar *dest_p = dest.bits();  //dest.constBits();
+            memcpy(img, dest_p, ret);
         }
 
         /*! \todo - anotrher transformation postprocess
@@ -73,7 +78,7 @@ protected:
 
         if(info){
 
-            info->format = (unsigned)src.format();
+            info->format = (unsigned)dest.format();
             info->w = src.width();
             info->h = src.height();
         }

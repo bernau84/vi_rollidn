@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QProcessEnvironment>
 #include <QDebug>
+#include <QLabel>
 
 #include <stdio.h>
 
@@ -52,11 +53,26 @@ int main(int argc, char *argv[])
 
     QApplication a(argc, argv);
 
-    //t_vi_camera_basler_usb dev;
-    //dev.snap(NULL, 0);
-
+    t_vi_camera_basler_usb dev;
     t_vi_camera_offline_file simul;
-    simul.snap(NULL, 0, NULL);
+
+    dev.init();
+    simul.init();
+
+    uint8_t *img = (uint8_t *) new uint8_t[4 * 4000 * 3000];
+    i_vi_camera_base::t_campic_info info;
+
+//    simul.snap(img, 4000 * 3000 * 4, &info);
+
+//    QLabel vizual1;
+//    vizual1.setPixmap(QPixmap::fromImage(QImage(img, info.w, info.h, (QImage::Format)info.format)));
+//    vizual1.show();
+
+    dev.snap(img, 4000 * 3000 * 4, &info);
+
+    QLabel vizual2;
+    vizual2.setPixmap(QPixmap::fromImage(QImage(img, info.w, info.h, (QImage::Format)info.format)));
+    vizual2.show();
 
     return a.exec();
 }

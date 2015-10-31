@@ -78,8 +78,8 @@ public:
         {
 
             //Loading user set 1 settings
-            camera.UserSetSelector.SetValue(UserSetSelector_UserSet1);
-            camera.UserSetLoad.Execute();
+            //camera.UserSetSelector.SetValue(UserSetSelector_UserSet1);
+            //camera.UserSetLoad.Execute();
 
             camera.StartGrabbing(1);
 
@@ -108,7 +108,7 @@ public:
                     switch(ptrGrabResult->GetPixelType()){
 
                         case PixelType_Mono8:
-                            src = QImage(pImageBuffer, ptrGrabResult->GetWidth(), ptrGrabResult->GetWidth(),
+                            src = QImage(pImageBuffer, ptrGrabResult->GetWidth(), ptrGrabResult->GetHeight(),
                                                    QImage::Format_Indexed8);
                         break;
                         default:   //dodelat podporu rgb pokud bude potreba, bayerovych masek respektive
