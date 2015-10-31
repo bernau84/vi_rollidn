@@ -8,6 +8,7 @@
 #include <QString>
 #include <QStringList>
 #include <QDebug>
+#include <QWaitCondition>
 
 #include "t_comm_parser.h"
 
@@ -29,7 +30,8 @@ public:
     virtual void on_read(QByteArray &dt) = 0;
     virtual void on_write(QByteArray &dt) = 0;
 
-    void on_ack(int code = 0){
+public slots:
+    void answ_ack(int code = 0){
 
         QString ret = QString("OK");
         if(code) ret += QString(" %1").arg(code);
@@ -37,7 +39,7 @@ public:
         on_write(ret.toLatin1());
     }
 
-    void on_error(int code = 0, QString info = QString()){
+    void answ_error(int code = 0, QString info = QString()){
 
         QString ret = QString("ERROR");
         if(code) ret += QString(" %1").arg(code);
@@ -46,9 +48,11 @@ public:
         on_write(ret.toLatin1());
     }
 
-    void on_answer_or_command(QString &cmd){
 
-        on_write(cmd.toLatin1());
+public:
+    virtual void callback(unsigned ord, QString par){
+
+        qDebug() << "ord(" << QString::number(ord) << ")" << par;
     }
 
     int refresh(){
@@ -56,22 +60,36 @@ public:
         QByteArray dt;
         on_read(dt);
 
-        int ret = -1;
+        int ret = -2; //== cekame na konec radky
 
         if(dt.isEmpty() == false)
             if((ret = feed(dt.constData(), dt.length())) >= 0){
 
                 callback(ret, QString(get_parameters().c_str()));
+                emit order(ret, QString(get_parameters().c_str()));
                 return ret;
             }
 
-        return -1;
+        return ret;
     }
 
-    virtual void callback(unsigned ord, QString par){
+    void query_command(QString &cmd, int timeout){
 
-        qDebug() << "ord(" << QString::number(ord) << ")" << par;
+        on_write(cmd.toLatin1());
+        while(timeout > 0){
+
+            if(refresh() >= 0)
+                break;
+
+            QMutex localMutex;
+            localMutex.lock();
+            QWaitCondition sleepSimulator;
+            sleepSimulator.wait(&localMutex, 10);
+
+            timeout -= 10;
+        }
     }
+
 
 signals:
     void order(unsigned ord, QString par);

@@ -16,6 +16,8 @@ public:
     //nova data pro parser - hleda povely ve streamu dat
     //a generuje signal pokud najdem
     //povel musi byt ukoncem <CR> nebo <LF> nebo oboji
+    //-1 povel neexistuje
+    //-2 cekame na konec radky
     int feed(const char *p, unsigned len){
 
         while(*p && len){
