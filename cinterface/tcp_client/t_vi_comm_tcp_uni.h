@@ -82,7 +82,7 @@ public:
     /*
      * server mode
      */
-    t_vi_comm_tcp_uni(uint16_t port, QStringList &orders = QStringList(), QObject *parent = NULL):
+    t_vi_comm_tcp_uni(uint16_t port, const char *orders[] = NULL, QObject *parent = NULL):
         i_vi_comm_base(orders, parent),
         tcp(NULL),
         ser(),
@@ -94,7 +94,7 @@ public:
     /*
      * client mode
      */
-    t_vi_comm_tcp_uni(QUrl &url, QStringList &orders = QStringList(), QObject *parent = NULL):
+    t_vi_comm_tcp_uni(QUrl &url, const char *orders[] = NULL, QObject *parent = NULL):
         i_vi_comm_base(orders, parent),
         tcp(NULL),
         ser(),

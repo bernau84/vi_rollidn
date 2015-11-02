@@ -70,9 +70,11 @@ public:
         return orders.size();
     }
 
-    t_vi_comm_parser(std::vector<const char *> &set):
-        orders(set)
+    t_vi_comm_parser(const char *set[])
     {
+        if(set)
+            for(int i=0; (set[i]) && (*set[i]); i++)
+                reg_command(set[i]);
     }
 
     t_vi_comm_parser()

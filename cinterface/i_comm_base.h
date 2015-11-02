@@ -105,13 +105,10 @@ signals:
     void order(unsigned ord, QString par);
 
 public:
-    i_vi_comm_base(QStringList &orders = QStringList(), QObject *parent = NULL) :
+    i_vi_comm_base(const char *orders[], QObject *parent = NULL) :
         QObject(parent),
-        t_vi_comm_parser()
+        t_vi_comm_parser(orders)
     {
-        for(int i=0; i<orders.size(); i++)
-            this->reg_command(orders[i].toStdString().c_str());
-
         sta = COMMSTA_UNKNOWN;
 
         if(VI_COMM_REFRESH_RT)

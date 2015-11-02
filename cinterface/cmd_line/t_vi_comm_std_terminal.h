@@ -26,7 +26,7 @@ public:
         std::cout << dt.toStdString();
     }
 
-    t_vi_comm_std_terminal(QStringList &orders = QStringList(), QObject *parent = NULL):
+    t_vi_comm_std_terminal(const char *orders[] = NULL, QObject *parent = NULL):
         i_vi_comm_base(orders, parent)
     {
 
