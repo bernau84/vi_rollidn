@@ -12,6 +12,8 @@
 
 #include "t_comm_parser.h"
 
+#define VI_COMM_REFRESH_RT  50  //definuje reakcni cas
+
 class i_vi_comm_base : public QObject,  t_vi_comm_parser {
 
     Q_OBJECT
@@ -29,6 +31,13 @@ public:
 
     virtual void on_read(QByteArray &dt) = 0;
     virtual void on_write(QByteArray &dt) = 0;
+
+private slots:
+    void timerEvent(QTimerEvent * event){
+
+        event = event;
+        refresh();
+    }
 
 public slots:
     void answ_ack(int code = 0){
@@ -85,6 +94,7 @@ public:
             localMutex.lock();
             QWaitCondition sleepSimulator;
             sleepSimulator.wait(&localMutex, 10);
+            localMutex.unlock();
 
             timeout -= 10;
         }
@@ -95,7 +105,7 @@ signals:
     void order(unsigned ord, QString par);
 
 public:
-    i_vi_comm_base(QObject *parent = NULL, QStringList orders = QStringList()) :
+    i_vi_comm_base(QStringList &orders = QStringList(), QObject *parent = NULL) :
         QObject(parent),
         t_vi_comm_parser()
     {
@@ -103,6 +113,9 @@ public:
             this->reg_command(orders[i].toStdString().c_str());
 
         sta = COMMSTA_UNKNOWN;
+
+        if(VI_COMM_REFRESH_RT)
+            this->startTimer(VI_COMM_REFRESH_RT);
     }
 
     virtual ~i_vi_comm_base(){

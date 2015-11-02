@@ -14,9 +14,11 @@ protected:
 public:
     virtual void on_read(QByteArray &dt){
 
-        char c;
-        if(std::cin.readsome(&c, 1))
-           dt.append(c);
+        if(std::cin.rdbuf()->in_avail() == 0)
+            return;
+
+        char c = std::cin.get();  //v terminalu qt creatoru + win to zrovna nefunguje, ani cin.readsome(&c, 1)
+        if(c) dt.append(c);
     }
 
     virtual void on_write(QByteArray &dt){
@@ -24,8 +26,8 @@ public:
         std::cout << dt.toStdString();
     }
 
-    t_vi_comm_std_terminal(QObject *parent = NULL, QStringList orders = QStringList()):
-        i_vi_comm_base(parent, orders)
+    t_vi_comm_std_terminal(QStringList &orders = QStringList(), QObject *parent = NULL):
+        i_vi_comm_base(orders, parent)
     {
 
     }
