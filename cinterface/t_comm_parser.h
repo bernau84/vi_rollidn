@@ -18,36 +18,28 @@ public:
     //povel musi byt ukoncem <CR> nebo <LF> nebo oboji
     //-1 povel neexistuje
     //-2 cekame na konec radky
-    int feed(const char *p, unsigned len){
+    int feed(const char p){
 
-        while(*p && len){
+        if((p == '\r') || (p == '\n')){
 
-            if((*p == '\r') || (*p == '\n')){
+            for(unsigned i=0; i<orders.size(); i++){
 
-                for(unsigned i=0; i<orders.size(); i++){
+                int sz = strlen(orders[i]);
+                if(0 == memcmp(orders[i], line.c_str(), sz)){
 
-                    int sz = strlen(orders[i]);
-                    if(0 == memcmp(orders[i], line.c_str(), sz)){
+                    last_ord = std::string(orders[i]);
+                    last_par = line.substr(sz, line.length()  - sz);
 
-                        last_ord = std::string(orders[i]);
-                        last_par = line.substr(sz, line.length()  - sz);
-
-                        line.erase();
-                        return i;
-                    }
+                    line.erase();
+                    return i;
                 }
-
-                line.erase();
-                return -1;
-            } else {
-
-                line.push_back(*p);
             }
 
-            p += 1;
-            len -= 1;
+            line.erase();
+            return -1;
         }
 
+        line.push_back(p);
         return -2;
     }
 

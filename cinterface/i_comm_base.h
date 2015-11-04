@@ -14,18 +14,21 @@
 
 #define VI_COMM_REFRESH_RT  50  //definuje reakcni cas
 
+enum e_commsta {
+
+    COMMSTA_UNKNOWN = 0,
+    COMMSTA_PREPARED,
+    COMMSTA_INPROC,
+    COMMSTA_ERROR
+};
+
+
 class i_vi_comm_base : public QObject,  t_vi_comm_parser {
 
     Q_OBJECT
 
 protected:
-    enum e_commsta {
-
-        COMMSTA_UNKNOWN = 0,
-        COMMSTA_PREPARED,
-        COMMSTA_INPROC,
-        COMMSTA_ERROR
-    } sta;
+    e_commsta sta;
 
 public:
 
@@ -59,6 +62,11 @@ public slots:
 
 
 public:
+    e_commsta health(){
+
+        return sta;
+    }
+
     virtual void callback(unsigned ord, QString par){
 
         qDebug() << "ord(" << QString::number(ord) << ")" << par;
@@ -70,14 +78,15 @@ public:
         on_read(dt);
 
         int ret = -2; //== cekame na konec radky
+        if(dt.isEmpty() == false){
 
-        if(dt.isEmpty() == false)
-            if((ret = feed(dt.constData(), dt.length())) >= 0){
+            for(int i=0; i<dt.length(); i++)
+                if((ret = feed(dt[i])) >= 0){
 
-                callback(ret, QString(get_parameters().c_str()));
-                emit order(ret, QString(get_parameters().c_str()));
-                return ret;
-            }
+                    callback(ret, QString(get_parameters().c_str()));
+                    emit order(ret, QString(get_parameters().c_str()));
+                }
+        }
 
         return ret;
     }

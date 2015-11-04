@@ -16,8 +16,18 @@ int main(int argc, char *argv[])
     t_vi_comm_tcp_uni rem_serv(55000, ords);
     t_vi_comm_tcp_uni loc_cli(QUrl("http://localhost:55000"), ords);
 
-    rem_serv.query_command(QString("INIT\r\n"), 10);
+    QEventLoop loop;
+    while((rem_serv.health() != COMMSTA_PREPARED) ||
+          (loc_cli.health() != COMMSTA_PREPARED)){
+
+        loop.processEvents();
+    }
+
+    rem_serv.query_command(QString("INIT1\r\n"), 10);
     loc_cli.query_command(QString("RESULT\r\n"), 10);
+
+    rem_serv.query_command(QString("INIT2\r\n"), 10);
+    loc_cli.query_command(QString("ABORT\r\n"), 10);
 
     return a.exec();
 }
