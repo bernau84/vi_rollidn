@@ -64,6 +64,7 @@ int main(int argc, char *argv[])
 
 #ifdef QT_DEBUG
     worker.on_trigger(); //start measuring
+    worker.on_trigger(); //start measuring
 #endif //
 
     return a.exec();

@@ -60,7 +60,7 @@ private:
         int lwidth = to - from;
 
         for(int y = from; y < to; y++)
-            for(int x = 0; x < out.cols; x++)
+            for(int x = 0; x < width/4; x++)
                 if(out.at<uchar>(Point(x, y))){
 
                     locations.push_back(Point(x, y - from));
@@ -93,13 +93,13 @@ private:
                     "x0" << QString::number(line[2]) <<
                     "y0" << QString::number(line[3]);
 
-//                cv::line(trans,
-//                         Point(line[2]-line[0]*200, line[3]-line[1]*200),
-//                         Point(line[2]+line[0]*200, line[3]+line[1]*200),
-//                         Scalar(128, 128 ,128),
-//                         3, CV_AA);
+                cv::line(trans,
+                         Point(line[2]-line[0]*200, line[3]-line[1]*200),
+                         Point(line[2]+line[0]*200, line[3]+line[1]*200),
+                         Scalar(128, 128 ,128),
+                         3, CV_AA);
 
-//                imshow("Trans", trans);
+                imshow("Trans", trans);
 
         return line;
     }
@@ -131,8 +131,9 @@ public slots:
                          Scalar(128, 128 ,128),
                          2, CV_AA);
 
-                //cv::namedWindow("Transposed", CV_WINDOW_AUTOSIZE);
-                //cv::imshow("Transposed", out);
+
+                cv::namedWindow("Transposed", CV_WINDOW_AUTOSIZE);
+                cv::imshow("Transposed", out);
 
         ///spodni strana
         cv::Mat tmp = out; cv::flip(tmp, out, 1);
@@ -144,12 +145,14 @@ public slots:
                          Scalar(128, 128 ,128),
                          2, CV_AA);
 
-                //cv::namedWindow("Cylinder diameter", CV_WINDOW_AUTOSIZE);
-                //cv::imshow("Cylinder diameter", out.t());
+                cv::namedWindow("Cylinder diameter", CV_WINDOW_AUTOSIZE);
+                cv::imshow("Cylinder diameter", out.t());
 
         width = out.cols - line2[2] - line1[2];
         qDebug() << "Me-Width:" << QString::number(width);
 
+        //najdem pruseciky horni a spodni aproximace s levym a pravym celem
+        //to definuje mez pro hledani elipticke aproximace cela
         float left_s1 = line1[2] - (line1[0]/line1[1])*line1[3];
         float left_s2 = line2[2] - (line2[0]/line2[1])*line2[3];
         qDebug() << "Left-Corr:" << QString::number(left_s1) << QString::number(left_s2);
@@ -172,8 +175,8 @@ public slots:
 
                 cv::ellipse(out, Point(left_corr, line1[2] + width/2), Size(left_corr, width/2),
                         0.0, 0.0, 360, Scalar(128, 128 ,128), 2, 4);
-                //cv::namedWindow("Left elipse", CV_WINDOW_AUTOSIZE);
-                //cv::imshow("Left elipse", out);
+                cv::namedWindow("Left elipse", CV_WINDOW_AUTOSIZE);
+                cv::imshow("Left elipse", out);
 
         ///prava
         tmp = out; cv::flip(tmp, out, 1);

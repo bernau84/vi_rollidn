@@ -86,7 +86,7 @@ public slots:
             else
                 pisize = cam_simul.snap(img, 4000 * 3000 * 4, &info);
 
-            if((rep > 5) || abort){
+            if((rep >= 5) || abort){
 
                 /*! \todo - vyhlasime chybu */
                 abort = false;

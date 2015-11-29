@@ -14,6 +14,9 @@ using namespace std;
 
 class t_vi_proc_threshold : public i_proc_stage
 {
+public:
+    RotatedRect maxContRect;  //expotni aby sem si mohl zkontrolovat vysledky
+
 private:
     vector<vector<Point> > contours;
     Mat out;
@@ -52,21 +55,31 @@ public slots:
         findContours(out, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
         /// Draw contours
-        vector<RotatedRect> minRect;
+        int maxarea = 0;    ///
+        RotatedRect crect;
         out = Mat::zeros(src->size(), CV_8UC1);
-        for(unsigned i = 0; i < contours.size(); i++)
-            if(contourArea(contours[i]) > min_contour_area){
+        for(unsigned i = 0; i < contours.size(); i++){
 
-                minRect.push_back(minAreaRect(Mat(contours[i])));
+            int area = contourArea(contours[i]);
+            if(area > min_contour_area){
+
+                crect = minAreaRect(Mat(contours[i]));
                 drawContours(*src, contours, i, Scalar(255, 0, 0), 2, 8, hierarchy, 0, Point());
                 drawContours(out, contours, i, Scalar(255, 255, 255), 1, 8, hierarchy, 0, Point());
 
-                Point2f rect_points[4]; minRect.back().points(rect_points);
+                Point2f rect_points[4]; crect.points(rect_points);
                 for(int j = 0; j < 4; j++){
 
                    line(*src, rect_points[j], rect_points[(j+1)%4], Scalar(128, 0, 0), 1, 8);
                 }
+
+                if(maxarea < area){
+
+                    maxarea = area;
+                    maxContRect = crect;
+                }
             }
+        }
 
         /// Show in a window
         cv::imshow("Threahold/Contours/BoundRect", *src);
@@ -76,19 +89,25 @@ public slots:
 
         // matrices we'll use
         Mat M, rotated, cropped;
-        Size rect_size = minRect[0].size;
-        // thanks to http://felix.abecassis.me/2011/10/opencv-rotation-deskewing/
-        if (minRect[0].angle < -45.) {
+        Size rect_size = maxContRect.size;
 
-            minRect[0].angle += 90.0;
+        // thanks to http://felix.abecassis.me/2011/10/opencv-rotation-deskewing/
+        if (maxContRect.angle < -45.) {
+
+            maxContRect.angle += 90.0;
             swap(rect_size.width, rect_size.height);
         }
+
         // get the rotation matrix
-        M = cv::getRotationMatrix2D(minRect[0].center, minRect[0].angle, 1.0);
+        M = cv::getRotationMatrix2D(maxContRect.center,
+                                    maxContRect.angle, 1.0);
+
         // perform the affine transformation
         cv::warpAffine(out, rotated, M, out.size(), INTER_NEAREST);
+
         // crop the resulting image
-        cv::getRectSubPix(rotated, rect_size, minRect[0].center, cropped);
+        cv::getRectSubPix(rotated, rect_size,
+                          maxContRect.center, cropped);
 
         qDebug() << "cropped_rows" << QString::number(cropped.rows);
         qDebug() << "cropped_clms" << QString::number(cropped.cols);
@@ -96,10 +115,9 @@ public slots:
         out = cropped.clone();
 
         /// Show in a window
-        /*
         cv::namedWindow("Orto/Croped", CV_WINDOW_AUTOSIZE);
         cv::imshow("Orto/Croped", out);
-        */
+
         emit next(1, &out);
         return 1;
     }
