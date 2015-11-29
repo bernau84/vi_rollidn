@@ -24,7 +24,7 @@ private:
             QJsonDocument js_doc = QJsonDocument::fromJson(f_data);
             if(!js_doc.isEmpty()){
 
-                qDebug() << js_doc.toJson();
+                //qDebug() << js_doc.toJson();
                 return js_doc.object();
             }
         }

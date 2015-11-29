@@ -48,10 +48,21 @@ public:
 
     int init(){
 
-        if(!camera.IsPylonDeviceAttached()){
+        DeviceInfoList_t list;
+        CTlFactory::GetInstance().EnumerateDevices(list);
+
+        if(list.size() == 0){
 
             sta = CAMSTA_ERROR;
             return -1;
+        }
+
+        camera.Attach(CTlFactory::GetInstance().CreateFirstDevice());
+
+        if(!camera.IsPylonDeviceAttached()){
+
+            sta = CAMSTA_ERROR;
+            return -2;
         }
 
         QString mode = par["General"].get().toString();
@@ -137,7 +148,7 @@ public:
     }
 
     t_vi_camera_basler_usb():
-        camera(CTlFactory::GetInstance().CreateFirstDevice())
+        camera()
     {
 
     }

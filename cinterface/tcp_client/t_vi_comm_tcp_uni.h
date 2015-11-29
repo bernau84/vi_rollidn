@@ -91,7 +91,7 @@ public:
         if(port == 0) port = VI_COMM_TCPPORT_DEF;
 
         tcp->connectToHost(host, port);
-        if(tcp->waitForConnected(VI_COMM_TCPCLI_CONN_TMO)){
+        if(tcp->waitForConnected(50000/*VI_COMM_TCPCLI_CONN_TMO*/)){
 
             sta = COMMSTA_PREPARED;
             qDebug() << "Connected!";

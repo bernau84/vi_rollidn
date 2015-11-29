@@ -115,6 +115,9 @@ public:
 public slots:
     int proc(int p1, void *p2){
 
+        width = height = 0.0;
+        left_corr = right_corr = 0.0;
+
         p1 = p1;
         Mat *src = (Mat *)p2;
 

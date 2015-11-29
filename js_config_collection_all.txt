@@ -1,0 +1,57 @@
+{
+        "tcp-server-port": {
+                "__info": "tcp listener port",
+                "__def": 9100
+        },
+        "calibr-LO-dia": {
+                "__info": "calibration constant for smallest roll diameter [pix / mm]",
+                "__def": 1.0,
+                "__min": 0.001,
+                "__max": 1000
+        },
+        "calibr-HI-dia": {
+                "__info": "calibration constant for biggest roll diameter [pix / mm]",
+                "__def": 1.0,
+                "__min": 0.001,
+                "__max": 1000
+        },
+        "ROI-width": {
+                "__info": "roi width",
+                "__def": 0,
+                "__min": 1,
+                "__max": 4000
+        },
+        "ROI-height": {
+                "__info": "roi height",
+                "__def": 0,
+                "__min": 1,
+                "__max": 3000
+        },
+        "ROI-centerX": {
+                "__info": "roi center x",
+                "__def": 100,
+                "__min": 1
+        },
+        "ROI-centerY": {
+                "__info": "roi center y",
+                "__def": 100,
+                "__min": 1
+        },
+        "threshold_positive": {
+                "__info": "threshold",
+                "__def": 75,
+                "__min": 1,
+                "__max": 255
+        },
+        "threshold_binaryval": {
+                "__info": "threshold binary value",
+                "__def": 255,
+                "__min": 1,
+                "__max": 255
+        },
+        "contour_minimal": {
+                "__info": "valid countour area",
+                "__def": 100,
+                "__min": 1
+        }
+ }
