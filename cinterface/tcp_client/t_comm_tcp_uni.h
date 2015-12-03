@@ -1,7 +1,8 @@
 #ifndef T_VI_COMM_TCP_CLI
 #define T_VI_COMM_TCP_CLI
 
-#include "../i_comm_base.h"
+#include "../t_comm_parser_string.h"
+#include "../t_comm_parser_binary.h"
 #include "../../t_vi_setup.h"
 
 #include <QTcpSocket>
@@ -12,7 +13,7 @@
 #define VI_COMM_TCPCLI_CONN_TMO 10000
 #define VI_COMM_TCPPORT_DEF 51515
 
-class t_vi_comm_tcp_uni : public i_vi_comm_base {
+class t_comm_tcp : public i_comm_generic {
 
     Q_OBJECT
 
@@ -53,8 +54,8 @@ public:
     /*
      * server mode
      */
-    t_vi_comm_tcp_uni(uint16_t port, const char *orders[] = NULL, QObject *parent = NULL):
-        i_vi_comm_base(orders, parent),
+    t_comm_tcp(uint16_t port, i_comm_parser *parser, QObject *parent = NULL):
+        i_comm_generic(parser, parent),
         tcp(NULL),
         ser(),
         m_port(port)
@@ -75,8 +76,8 @@ public:
     /*
      * client mode
      */
-    t_vi_comm_tcp_uni(QUrl &url, const char *orders[] = NULL, QObject *parent = NULL):
-        i_vi_comm_base(orders, parent),
+    t_comm_tcp(QUrl &url, i_comm_parser *parser, QObject *parent = NULL):
+        i_comm_generic(parser, parent),
         tcp(NULL),
         ser(),
         m_url(url)
@@ -103,10 +104,41 @@ public:
         }
     }
 
-    ~t_vi_comm_tcp_uni(){
+    virtual ~t_comm_tcp(){
 
     }
 };
+
+
+//binarni verze tcp parseru - priklad
+class t_comm_tcp_te2 : public t_comm_tcp {
+
+public:
+    t_comm_parser_bin_te2 parser;
+
+    /*
+     * client mode
+     */
+    t_comm_tcp_te2(QUrl &url, QObject *parent = NULL):
+        t_comm_tcp(url, &parser, parent)
+    {
+    }
+
+    /*
+     * server mode
+     */
+    t_comm_tcp_te2(uint16_t port, QObject *parent = NULL):
+        t_comm_tcp(port, &parser, parent)
+    {
+    }
+
+    virtual ~t_comm_tcp_te2(){
+
+    }
+
+};
+
+/*! \todo string parser pokud to bude nutne */
 
 #endif // T_VI_COMM_TCP_CLI
 

@@ -6,11 +6,7 @@
 #include <stdio.h>
 
 #include "t_roll_idn_collection.h"
-
-const char *ords[] = {
-    "MEAS", "ABORT", "OK", "RESULT", NULL
-};
-
+#include "cinterface\tcp_client\t_comm_tcp_uni.h"
 
 int main(int argc, char *argv[])
 {
@@ -59,6 +55,7 @@ int main(int argc, char *argv[])
 
     //QString config_path = QDir::currentPath() + "\\config.txt";
     QString config_path = "c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\js_config_collection_all.txt";
+
     t_roll_idn_collection worker(config_path);
     worker.initialize();
 

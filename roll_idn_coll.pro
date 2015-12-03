@@ -41,8 +41,6 @@ DISTFILES += \
 HEADERS += \
     cameras/i_camera_base.h \
     cameras/t_camera_attrib.h \
-    cinterface/i_comm_base.h \
-    cinterface/t_comm_parser.h \
     processing/i_proc_stage.h \
     processing/t_vi_proc_roi_grayscale.h \
     processing/t_vi_proc_roll_approx.h \
@@ -50,10 +48,15 @@ HEADERS += \
     t_vi_setup.h \
     cameras/basler/t_vi_camera_basler_usb.h \
     cameras/offline/t_vi_camera_offline_file.h \
-    cinterface/cmd_line/t_vi_comm_std_terminal.h \
-    cinterface/tcp_client/t_vi_comm_tcp_uni.h \
     t_roll_idn_collection.h \
-    t_roll_idn_record_storage.h
+    t_roll_idn_record_storage.h \
+    t_vi_specification.h \
+    cinterface/i_comm_generic.h \
+    cinterface/i_comm_parser.h \
+    cinterface/t_comm_parser_binary.h \
+    cinterface/t_comm_parser_string.h \
+    cinterface/cmd_line/t_comm_std_terminal.h \
+    cinterface/tcp_client/t_comm_tcp_uni.h
 
 DEFINES += USE_USB
 

@@ -1,15 +1,16 @@
 #ifndef T_VI_COMM_STD_TERMINAL
 #define T_VI_COMM_STD_TERMINAL
 
-#include "../i_comm_base.h"
-#include "../../t_vi_setup.h"
-
+#include "../t_comm_parser_string.h"
+#include "../i_comm_generic.h"
 #include <iostream>
 
-class t_vi_comm_std_terminal : public i_vi_comm_base {
+class t_comm_stdte : public i_comm_generic {
 
-protected:
-    t_collection par;
+    Q_OBJECT
+
+private:
+    t_comm_parser_string parser;
 
 public:
     virtual void on_read(QByteArray &dt){
@@ -26,13 +27,14 @@ public:
         std::cout << dt.toStdString();
     }
 
-    t_vi_comm_std_terminal(const char *orders[] = NULL, QObject *parent = NULL):
-        i_vi_comm_base(orders, parent)
+    t_comm_stdte (const char *orders[] = NULL, QObject *parent = NULL):
+        parser(orders),
+        i_comm_generic(&parser, parent)
     {
 
     }
 
-    ~t_vi_comm_std_terminal(){
+    ~t_comm_stdte (){
 
     }
 };

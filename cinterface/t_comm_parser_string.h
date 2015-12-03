@@ -1,5 +1,5 @@
-#ifndef I_COMMUNICATION_BASE
-#define I_COMMUNICATION_BASE
+#ifndef I_COMMUNICATION_BASE_STRING
+#define I_COMMUNICATION_BASE_STRING
 
 #include <stdio.h>
 #include <stdint.h>
@@ -10,124 +10,60 @@
 #include <QDebug>
 #include <QWaitCondition>
 
-#include "t_comm_parser.h"
+#include "i_comm_parser.h"
+#include "i_comm_generic.h"
 
-#define VI_COMM_REFRESH_RT  50  //definuje reakcni cas
+class t_comm_parser_string : public i_comm_parser {
 
-enum e_commsta {
+    using i_comm_parser::tmp;
+    using i_comm_parser::last;
 
-    COMMSTA_UNKNOWN = 0,
-    COMMSTA_PREPARED,
-    COMMSTA_INPROC,
-    COMMSTA_ERROR
-};
-
-
-class i_vi_comm_base : public QObject,  t_vi_comm_parser {
-
-    Q_OBJECT
-
-protected:
-    e_commsta sta;
+private:
+    std::vector<const char *> orders;
 
 public:
+    virtual int feed(uint8_t p){
 
-    virtual void on_read(QByteArray &dt) = 0;
-    virtual void on_write(QByteArray &dt) = 0;
+        if((p == '\r') || (p == '\n')){
 
-private slots:
-    void timerEvent(QTimerEvent * event){
+            for(unsigned i=0; i< orders.size(); i++){
 
-        event = event;
-        refresh();
-    }
+                std::string s(tmp.begin(), tmp.end());
+                if(s.compare(orders[i])){
 
-public slots:
-    void answ_ack(int code = 0){
-
-        QString ret = QString("OK");
-        if(code) ret += QString(" %1").arg(code);
-        ret += "\r\n";
-        on_write(ret.toLatin1());
-    }
-
-    void answ_error(int code = 0, QString info = QString()){
-
-        QString ret = QString("ERROR");
-        if(code) ret += QString(" %1").arg(code);
-        if(info.isEmpty() == false) ret += QString(", \"%2\"").arg(info);
-        ret += "\r\n";
-        on_write(ret.toLatin1());
-    }
-
-
-public:
-    e_commsta health(){
-
-        return sta;
-    }
-
-    virtual void callback(unsigned ord, QString par){
-
-        qDebug() << "ord(" << QString::number(ord) << ")" << par;
-    }
-
-    int refresh(){
-
-        QByteArray dt;
-        on_read(dt);
-
-        int ret = -2; //== cekame na konec radky
-        if(dt.isEmpty() == false){
-
-            for(int i=0; i<dt.length(); i++)
-                if((ret = feed(dt[i])) >= 0){
-
-                    callback(ret, QString(get_parameters().c_str()));
-                    emit order(ret, QString(get_parameters().c_str()));
+                    last = tmp;
+                    tmp.clear();
+                    return i;
                 }
+            }
+
+            tmp.clear();
+            return -1;
         }
 
-        return ret;
+        tmp.push_back(p);
+        return -2;
     }
 
-    void query_command(QString &cmd, int timeout){
+    //vraci kod pro registrovany povel
+    unsigned reg_command(const char *ord){
 
-        on_write(cmd.toLatin1());
-        while(timeout > 0){
-
-            if(refresh() >= 0)
-                break;
-
-            QMutex localMutex;
-            localMutex.lock();
-            QWaitCondition sleepSimulator;
-            sleepSimulator.wait(&localMutex, 10);
-            localMutex.unlock();
-
-            timeout -= 10;
-        }
+        orders.push_back(ord);
+        return orders.size();
     }
 
-
-signals:
-    void order(unsigned ord, QString par);
-
-public:
-    i_vi_comm_base(const char *orders[], QObject *parent = NULL) :
-        QObject(parent),
-        t_vi_comm_parser(orders)
+    t_comm_parser_string(const char *_orders[]) :
+        i_comm_parser()
     {
-        sta = COMMSTA_UNKNOWN;
-
-        if(VI_COMM_REFRESH_RT)
-            this->startTimer(VI_COMM_REFRESH_RT);
+        if(_orders)
+            for(int i=0; (_orders[i]) && (*_orders[i]); i++)
+                reg_command(_orders[i]);
     }
 
-    virtual ~i_vi_comm_base(){
+    virtual ~t_comm_parser_string(){
 
     }
 };
 
-#endif // I_COMMUNICATION_BASE
+#endif // I_COMMUNICATION_BASE_STRING
 

@@ -1,82 +1,32 @@
-#ifndef T_VII_COMMAND_PARSER
-#define T_VII_COMMAND_PARSER
+#ifndef I_COMM_PARSER
+#define I_COMM_PARSER
 
 #include <stdint.h>
 #include <string.h>
 
-class t_vi_comm_parser {
+class i_comm_parser {
 
-private:
-    std::vector<const char *> orders;
-    std::string line;
-    std::string last_par;
-    std::string last_ord;
+protected:
+    std::vector<uint8_t> tmp;
+    std::vector<uint8_t> last;
 
 public:
-    //nova data pro parser - hleda povely ve streamu dat
-    //a generuje signal pokud najdem
-    //povel musi byt ukoncem <CR> nebo <LF> nebo oboji
+    //nova data pro parser
+    //>=0 cislo povelu - zavisle na implementaci
     //-1 povel neexistuje
-    //-2 cekame na konec radky
-    int feed(const char p){
+    //-2 cekame na konec (u stringu radky, u binary na data pro datagram)
+    virtual int feed(uint8_t p) = 0;
 
-        if((p == '\r') || (p == '\n')){
+public:
+    //vraci posledni raw paket
+    std::vector<uint8_t> getlast(){
 
-            for(unsigned i=0; i<orders.size(); i++){
-
-                int sz = strlen(orders[i]);
-                if(0 == memcmp(orders[i], line.c_str(), sz)){
-
-                    last_ord = std::string(orders[i]);
-                    last_par = line.substr(sz, line.length()  - sz);
-
-                    line.erase();
-                    return i;
-                }
-            }
-
-            line.erase();
-            return -1;
-        }
-
-        line.push_back(p);
-        return -2;
+        return last;
     }
 
-    //vraci adekvatni string posledniho povelu
-    std::string get_order(){
-
-        return last_ord;
-    }
-
-    //vraci parametry posledniho povelu
-    std::string get_parameters(){
-
-        return last_par;
-    }
-
-    //vraci kod pro registrovany povel
-    unsigned reg_command(const char *ord){
-
-        orders.push_back(ord);
-        return orders.size();
-    }
-
-    t_vi_comm_parser(const char *set[])
-    {
-        if(set)
-            for(int i=0; (set[i]) && (*set[i]); i++)
-                reg_command(set[i]);
-    }
-
-    t_vi_comm_parser()
-    {
-    }
-
-    ~t_vi_comm_parser()
-    {
-    }
+    i_comm_parser(){;}
+    virtual ~i_comm_parser(){;}
 };
 
-#endif // T_VII_COMMAND_PARSER
+#endif // I_COMM_PARSER
 
