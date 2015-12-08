@@ -1,7 +1,7 @@
 #ifndef T_VI_SPECIFICATION
 #define T_VI_SPECIFICATION
 
-#include "cinterface\tcp_client\t_comm_tcp_uni.h"
+#include "cinterface\tcp_uni\t_comm_tcp_uni.h"
 
 //vyznam bitu definuje dokument "datagram-pl-pc-cpecification"
 //https://docs.google.com/document/d/1mEbkwBnB_EEMSWxB8eQIjCiENeP74lsUJXaSv8vnYG8/edit

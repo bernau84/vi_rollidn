@@ -56,7 +56,7 @@ HEADERS += \
     cinterface/t_comm_parser_binary.h \
     cinterface/t_comm_parser_string.h \
     cinterface/cmd_line/t_comm_std_terminal.h \
-    cinterface/tcp_client/t_comm_tcp_uni.h
+    cinterface/tcp_uni/t_comm_tcp_uni.h
 
 DEFINES += USE_USB
 

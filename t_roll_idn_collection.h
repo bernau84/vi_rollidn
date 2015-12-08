@@ -163,9 +163,9 @@ public:
 #ifndef QT_DEBUG
 
         //cekani na pripojeni plc
-        QEventLoop loop;
-        while(tcp_server.health() != COMMSTA_PREPARED)
-            loop.processEvents();
+//        QEventLoop loop;
+//        while(iface.health() != COMMSTA_PREPARED)
+//            loop.processEvents();
 #endif //
 
         return 1;

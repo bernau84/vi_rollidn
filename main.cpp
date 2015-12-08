@@ -6,7 +6,6 @@
 #include <stdio.h>
 
 #include "t_roll_idn_collection.h"
-#include "cinterface\tcp_client\t_comm_tcp_uni.h"
 
 int main(int argc, char *argv[])
 {

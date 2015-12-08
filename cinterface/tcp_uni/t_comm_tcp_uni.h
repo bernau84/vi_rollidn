@@ -40,8 +40,12 @@ public:
             if(tcp->isReadable())
                 dt = tcp->readAll();
 
-        if(dt.isEmpty() == false)
-            qDebug() << typeid(this).name() << "received:" << QString::fromStdString(dt.toStdString());
+        if(dt.isEmpty() == false){
+
+            qDebug() << typeid(this).name() << "rx-str: " << QString(dt);
+            QString ordvals; for(int i=0; i < dt.size(); i++) ordvals += QString("0x%1,").arg(int(dt[i]), 2, 16, QChar('0'));
+            qDebug() << typeid(this).name() << "rx-bin: " << ordvals;
+        }
     }
 
     virtual void on_write(QByteArray &dt){
