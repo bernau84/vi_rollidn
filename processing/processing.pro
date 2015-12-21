@@ -9,7 +9,7 @@ QT       += core
 CONFIG   += console
 CONFIG   -= app_bundle
 
-TARGET = processing
+TARGET = processing7
 TEMPLATE = app
 
 SOURCES += main.cpp
@@ -22,6 +22,13 @@ HEADERS  += \
     t_vi_proc_roll_approx.h
 
 INCLUDEPATH += "C:\\opencv\\build\\include"
+
+#LIBS += -L"C:\\opencv\\build\\x86\\vc10\\lib" \
+#    -lopencv_core2410d \
+#    -lopencv_highgui2410d \
+#    -lopencv_imgproc2410d \
+#    -lopencv_features2d2410d \
+#    -lopencv_calib3d2410d
 
 LIBS += -L"C:\\opencv\\build\\x86\\vc10\\lib" \
     -lopencv_core2410d \

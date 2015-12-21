@@ -7,7 +7,7 @@
 QT       += core gui
 QT       += widgets
 
-TARGET = cameras
+TARGET = cameras2
 
 TEMPLATE = app
 

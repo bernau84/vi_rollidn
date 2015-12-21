@@ -65,16 +65,50 @@ public slots:
         par = par; //unused
         switch(ord){
 
-            case 0: //meas
+            case VI_PLC_PC_TRIGGER: //meas
             {
+                //potvrdime prijem
+                t_comm_binary_rollidn reply_st1 = {(uint8_t)VI_PLC_PC_TRIGGER_ACK, error_mask, 0, 0};
+                QByteArray reply_by1((const char *)&reply_st1, sizeof(t_comm_binary_rollidn));
+                iface.on_write(reply_by1);
+
                 int res = on_trigger();
-               //opakujem 2x pokud se mereni nepovede
-                if(!res) res = on_trigger();
+                if(!res) res = on_trigger(); //opakujem 2x pokud se mereni nepovede
+
+                t_comm_binary_rollidn reply_st2 = {(uint8_t)VI_PLC_PC_RESULT, error_mask, ms.width, ms.height};
+                QByteArray reply_by2((const char *)&reply_st2, sizeof(t_comm_binary_rollidn));
+                iface.on_write(reply_by2);
+
                 return res;
             }
             break;
-            case 1:
-                return on_abort();
+            case VI_PLC_PC_ABORT:
+                on_abort(); //nastavi preruseni a ceka na jeho vyuhodnoceni
+                //a prekontrolujem jak na tom sme
+            case VI_PLC_PC_READY:
+            {
+                if(on_ready()){
+                    //potvrdime prijem
+                    t_comm_binary_rollidn reply_st = {(uint8_t)VI_PLC_PC_CALIBRATE_ACK, error_mask, 0, 0};
+                    QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
+                    iface.on_write(reply_by);
+                } else {
+                    //nejsme operabilni
+                    t_comm_binary_rollidn reply_st = {(uint8_t)VI_PLC_PC_ERROR, error_mask, 0, 0};
+                    QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
+                    iface.on_write(reply_by);
+                }
+            }
+            break;
+            case VI_PLC_PC_CALIBRATE:
+            {
+                on_calibration();
+
+                //potvrdime vysledek - pokud se nepovedlo vratime nejaky error bit + nesmyslne hodnoty mereni width & height
+                t_comm_binary_rollidn reply_st = {(uint8_t)VI_PLC_PC_CALIBRATE_ACK, error_mask, ms.width, ms.height};
+                QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
+                iface.on_write(reply_by);
+            }
             break;
         }
 
@@ -117,13 +151,6 @@ public slots:
         cv::Mat src(info.h, info.w, CV_8UC4, img);
         ct.proc(0, &src);
 
-        //debug
-        const char *replys = "ZMERENO!";
-        QByteArray replyb(replys);
-        iface.on_write(replyb);
-
-        store.add(QString(replys), snapshot);
-
         delete[] img;
 
         //vyhodnoceni vysledku
@@ -136,6 +163,23 @@ public slots:
     int on_abort(){
 
         abort = true;
+
+        /*! \todo - qloop a cekame na vyhodnoceni (smazani abortu) */
+
+        return 1;
+    }
+
+    int on_ready(){
+
+        /*! \todo - vyhodnotit stav - mame zkalibravano nebo ne; inicializace a nastaveni chyb */
+        return 1;
+    }
+
+    int on_calibration(){
+
+        /*! \todo - volame triger a prepocet kalibracnich konstant
+        zapisem do konfigurace
+        */
         return 1;
     }
 
@@ -160,13 +204,12 @@ public:
         cam_device.init();
         cam_simul.init();
 
-#ifndef QT_DEBUG
-
-        //cekani na pripojeni plc
+//#ifndef QT_DEBUG
+//        //cekani na pripojeni plc
 //        QEventLoop loop;
 //        while(iface.health() != COMMSTA_PREPARED)
 //            loop.processEvents();
-#endif //
+//#endif
 
         return 1;
     }

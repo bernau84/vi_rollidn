@@ -52,16 +52,16 @@ protected:
         QImage dest;
 
         QString f = par["Format"].get().toString();  //pozadovany format
-        if(0 == f.compare("8bMONO")){
+//        if(0 == f.compare("8bMONO")){
 
-            dest = src.convertToFormat(QImage::Format_Indexed8);
-        } else if(0 == f.compare("32bRGB")){
+//            dest = src.convertToFormat(QImage::Format_Indexed8);
+//        } else if(0 == f.compare("32bRGB")){
 
             dest = src.convertToFormat(QImage::Format_RGB32);
-        } else { //beze zmeny - jek to prekopiruju
+//        } else { //beze zmeny - jek to prekopiruju
 
-            dest = src;
-        }
+//            dest = src;
+//        }
 
         if((int)free < (ret = dest.byteCount())) //nemame dostatecny prostor
             return -ret;

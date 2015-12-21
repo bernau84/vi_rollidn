@@ -82,7 +82,9 @@ private:
             Point p(locations[i].x, lwidth * sqrt(1 - pow(y_t/(lwidth/2), 2)));  //in picture coords
             locations_t.push_back(p);
 
+#ifdef xQT_DEBUG
             cv::line(trans, p, p, Scalar(255, 255, 255), 2, 8);
+#endif //QT_DEBUG
         }
 
         cv::fitLine(locations_t, line, CV_DIST_L2, 0, 0.01, 0.01);
@@ -93,6 +95,7 @@ private:
                     "x0" << QString::number(line[2]) <<
                     "y0" << QString::number(line[3]);
 
+#ifdef xQT_DEBUG
                 cv::line(trans,
                          Point(line[2]-line[0]*200, line[3]-line[1]*200),
                          Point(line[2]+line[0]*200, line[3]+line[1]*200),
@@ -100,6 +103,7 @@ private:
                          3, CV_AA);
 
                 imshow("Trans", trans);
+#endif //QT_DEBUG
 
         return line;
     }
@@ -131,9 +135,10 @@ public slots:
                          Scalar(128, 128 ,128),
                          2, CV_AA);
 
-
+#ifdef xQT_DEBUG
                 cv::namedWindow("Transposed", CV_WINDOW_AUTOSIZE);
                 cv::imshow("Transposed", out);
+#endif // QT_DEBUG
 
         ///spodni strana
         cv::Mat tmp = out; cv::flip(tmp, out, 1);
@@ -144,9 +149,10 @@ public slots:
                          Point(line2[2]+line2[0]*100, line2[3]+line2[1]*100),
                          Scalar(128, 128 ,128),
                          2, CV_AA);
-
+#ifdef xQT_DEBUG
                 cv::namedWindow("Cylinder diameter", CV_WINDOW_AUTOSIZE);
                 cv::imshow("Cylinder diameter", out.t());
+#endif // QT_DEBUG
 
         width = out.cols - line2[2] - line1[2];
         qDebug() << "Me-Width:" << QString::number(width);
@@ -175,8 +181,10 @@ public slots:
 
                 cv::ellipse(out, Point(left_corr, line1[2] + width/2), Size(left_corr, width/2),
                         0.0, 0.0, 360, Scalar(128, 128 ,128), 2, 4);
+#ifdef xQT_DEBUG
                 cv::namedWindow("Left elipse", CV_WINDOW_AUTOSIZE);
                 cv::imshow("Left elipse", out);
+#endif //QT_DEBUG
 
         ///prava
         tmp = out; cv::flip(tmp, out, 1);

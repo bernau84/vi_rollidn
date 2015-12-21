@@ -52,16 +52,16 @@ int main(int argc, char *argv[])
 
     QApplication a(argc, argv);
 
-    //QString config_path = QDir::currentPath() + "\\config.txt";
-    QString config_path = "c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\js_config_collection_all.txt";
+    QString config_path = QDir::currentPath() + "/config.txt";
+    //QString config_path = "c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\js_config_collection_all.txt";
 
     t_roll_idn_collection worker(config_path);
     worker.initialize();
 
-#ifdef QT_DEBUG
+//#ifdef QT_DEBUG
     worker.on_trigger(); //start measuring
     worker.on_trigger(); //start measuring
-#endif //
+//#endif //
 
     return a.exec();
 }

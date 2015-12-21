@@ -12,13 +12,15 @@
 
 //puvodne to byly ciala ale jakubneu to pochopil jako masku - budiz tedy
 enum e_vi_plc_pc_ords {
-    VI_PLC_PC_TRIGGER = (1 << 0),
-    VI_PLC_PC_ABORT = (1 << 1),
-    VI_PLC_PC_RESULT = (1 << 2),
-    VI_PLC_PC_TRIGGER_ACK = (1 << 3),
-    VI_PLC_PC_RESULT_ACK = (1 << 4),
-    VI_PLC_PC_ERROR = (1 << 5), //see e_vi_plc_pc_errors
-    VI_PLC_PC_READY = (1 << 6)
+    VI_PLC_PC_TRIGGER = 0,
+    VI_PLC_PC_ABORT = 1,
+    VI_PLC_PC_RESULT = 2,
+    VI_PLC_PC_TRIGGER_ACK = 3,
+    VI_PLC_PC_RESULT_ACK = 4,
+    VI_PLC_PC_ERROR = 5, //see e_vi_plc_pc_errors
+    VI_PLC_PC_READY = 6,
+    VI_PLC_PC_CALIBRATE = 7,
+    VI_PLC_PC_CALIBRATE_ACK = 8
 };
 
 
