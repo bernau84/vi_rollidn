@@ -51,17 +51,17 @@ protected:
         int ret = 0;
         QImage dest;
 
-        QString f = par["Format"].get().toString();  //pozadovany format
-//        if(0 == f.compare("8bMONO")){
+        QString f = par["pic-format"].get().toString();  //pozadovany format
+        if(0 == f.compare("8bMONO")){
 
-//            dest = src.convertToFormat(QImage::Format_Indexed8);
-//        } else if(0 == f.compare("32bRGB")){
+            dest = src.convertToFormat(QImage::Format_Indexed8);
+        } else if(0 == f.compare("32bRGB")){
 
             dest = src.convertToFormat(QImage::Format_RGB32);
-//        } else { //beze zmeny - jek to prekopiruju
+        } else { //beze zmeny - jek to prekopiruju
 
-//            dest = src;
-//        }
+            dest = src;
+        }
 
         if((int)free < (ret = dest.byteCount())) //nemame dostatecny prostor
             return -ret;
@@ -118,6 +118,12 @@ public:
 
 
     i_vi_camera_base(){
+
+        sta = CAMSTA_UNKNOWN;
+    }
+
+    i_vi_camera_base(const QString &path):
+        par(path){
 
         sta = CAMSTA_UNKNOWN;
     }

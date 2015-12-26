@@ -42,7 +42,8 @@ private:
                             cv::line(out, p, p, Scalar(64, 64, 64), 3, 8);
                         }
 
-        cv::fitLine(locations, line, CV_DIST_L2, 0, 0.01, 0.01);
+        if(locations.size())
+            cv::fitLine(locations, line, CV_DIST_L2, 0, 0.01, 0.01);
 
         qDebug() << "line" <<
                     "vx" << QString::number(line[0]) <<
@@ -87,7 +88,8 @@ private:
 #endif //QT_DEBUG
         }
 
-        cv::fitLine(locations_t, line, CV_DIST_L2, 0, 0.01, 0.01);
+        if(locations_t.size())
+            cv::fitLine(locations_t, line, CV_DIST_L2, 0, 0.01, 0.01);
 
         qDebug() << "line" <<
                     "vx" << QString::number(line[0]) <<
@@ -159,12 +161,12 @@ public slots:
 
         //najdem pruseciky horni a spodni aproximace s levym a pravym celem
         //to definuje mez pro hledani elipticke aproximace cela
-        float left_s1 = line1[2] - (line1[0]/line1[1])*line1[3];
-        float left_s2 = line2[2] - (line2[0]/line2[1])*line2[3];
+        float left_s1 = line1[2] - (line1[0]/(line1[1] + 1e-6))*line1[3];
+        float left_s2 = line2[2] - (line2[0]/(line2[1] + 1e-6))*line2[3];
         qDebug() << "Left-Corr:" << QString::number(left_s1) << QString::number(left_s2);
 
-        float right_s1 = line1[2] + (line1[0]/line1[1])*(out.rows - line1[3]);
-        float right_s2 = line2[2] + (line2[0]/line2[1])*(out.rows - line2[3]);
+        float right_s1 = line1[2] + (line1[0]/(line1[1] + 1e-6))*(out.rows - line1[3]);
+        float right_s2 = line2[2] + (line2[0]/(line2[1] + 1e-6))*(out.rows - line2[3]);
         qDebug() << "Right-Corr:" << QString::number(right_s1) << QString::number(right_s2);
 
         if(left_s1 < line1[2]) left_s1 = line1[2];  //nejdem pod zapor ani pod stredni hodnotu aproximace
@@ -176,7 +178,7 @@ public slots:
         tmp = out.t(); cv::flip(tmp, out, 0); //*src;  //original
         //Vec4f line3 = eliptic_approx(line1[2], line1[2] + width); //zjednoduseno - kraj definujem jen strednim prumerem
         Vec4f line3 = eliptic_approx(left_s1, out.rows - left_s2);
-        left_corr = fabs((line3[3] / line3[1]) * line3[0]) + line3[2];  //shift calc - ie. transform from parametric to y=f(x) eq.
+        left_corr = fabs((line3[3] / (line3[1] + 1e-6)) * line3[0]) + line3[2];  //shift calc - ie. transform from parametric to y=f(x) eq.
         qDebug() << "Correction-Left:" << QString::number(left_corr);
 
                 cv::ellipse(out, Point(left_corr, line1[2] + width/2), Size(left_corr, width/2),
@@ -189,11 +191,11 @@ public slots:
         ///prava
         tmp = out; cv::flip(tmp, out, 1);
         Vec4f line4 = eliptic_approx(right_s1, out.rows - right_s2);
-        right_corr = fabs((line4[3] / line4[1]) * line4[0]) + line4[2];
+        right_corr = fabs((line4[3] / (line4[1] + 1e-6)) * line4[0]) + line4[2];
         qDebug() << "Correction-Right:" << QString::number(right_corr);
 
                 cv::ellipse(out, Point(right_corr, line1[2] + width/2), Size(right_corr, width/2),
-                        0.0, 0.0, 360, Scalar(128, 128 ,128), 2, 4);
+                        0.0, 0.0, 360, Scalar(128, 128, 128), 2, 4);
                 cv::namedWindow("Cylinder bases", CV_WINDOW_AUTOSIZE);
                 cv::imshow("Cylinder bases", out);
 

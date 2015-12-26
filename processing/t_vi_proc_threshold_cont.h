@@ -47,6 +47,8 @@ public slots:
 
         Mat *src = (Mat *)p2;
 
+        maxContRect = RotatedRect(Point2f(0, 0), Size2f(0, 0), 0.0);
+
         /// Hard limit - convert to binary
         cv::threshold(*src, out, thresh, max_thresh, THRESH_BINARY);
 
@@ -55,7 +57,7 @@ public slots:
         findContours(out, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
         /// Draw contours
-        int maxarea = 0;    ///
+        int maxarea = 0, maxindex = 0;    ///
         RotatedRect crect;
         out = Mat::zeros(src->size(), CV_8UC1);
         for(unsigned i = 0; i < contours.size(); i++){
@@ -65,7 +67,6 @@ public slots:
 
                 crect = minAreaRect(Mat(contours[i]));
                 drawContours(*src, contours, i, Scalar(255, 0, 0), 2, 8, hierarchy, 0, Point());
-                drawContours(out, contours, i, Scalar(255, 255, 255), 1, 8, hierarchy, 0, Point());
 
                 Point2f rect_points[4]; crect.points(rect_points);
                 for(int j = 0; j < 4; j++){
@@ -75,14 +76,20 @@ public slots:
 
                 if(maxarea < area){
 
-                    maxarea = area;
+                    maxarea = area; maxindex = i;
                     maxContRect = crect;
                 }
             }
         }
 
+        drawContours(out, contours, maxindex, Scalar(255, 255, 255), 1, 8, hierarchy, 0, Point());
+
         /// Show in a window
-        cv::imshow("Threahold/Contours/BoundRect", *src);
+        Mat resized;
+        resize(*src, resized, Size(), 0.5, 0.5);
+        cv::namedWindow("Contours/BoundRect", CV_WINDOW_AUTOSIZE);
+        cv::imshow("Contours/BoundRect", resized);
+        cv::resizeWindow("Contours/BoundRect", resized.cols, resized.rows);
 
         qDebug() << "pre_rows" << QString::number(src->rows);
         qDebug() << "pre_clms" << QString::number(src->cols);
@@ -114,9 +121,10 @@ public slots:
 
         out = cropped.clone();
 
-        /// Show in a window
-        cv::namedWindow("Orto/Croped", CV_WINDOW_AUTOSIZE);
-        cv::imshow("Orto/Croped", out);
+//        /// Show in a window
+//        cv::namedWindow("Orto/Croped", CV_WINDOW_AUTOSIZE);
+//        cv::imshow("Orto/Croped", out);
+//        //cv::resizeWindow("Orto/Croped", out.cols, out.rows);
 
         emit next(1, &out);
         return 1;

@@ -147,6 +147,13 @@ public:
         return 0;
     }
 
+    t_vi_camera_basler_usb(const QString &path):
+        i_vi_camera_base(path),
+        camera()
+    {
+
+    }
+
     t_vi_camera_basler_usb():
         camera()
     {

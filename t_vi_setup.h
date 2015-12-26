@@ -192,7 +192,7 @@ public:
  * a tak to chcem multiplatformni
  */
 
-class t_collection : public QObject, protected QJsonObject {
+class t_collection : public QObject, public QJsonObject {
 
     Q_OBJECT
 signals:

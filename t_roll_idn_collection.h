@@ -22,6 +22,8 @@
 #include "t_vi_specification.h"
 #include "t_roll_idn_record_storage.h"
 
+#define ERR_MEAS_MINAREA_TH 100
+
 //global definition of txt remote orders
 extern const char *ords[];
 
@@ -31,7 +33,7 @@ class t_roll_idn_collection : public QObject {
 
 private:
     //constructor helpers
-    QJsonObject __set_from_file(const QString &path){
+    QJsonObject __from_file(){
 
         // default config
         QFile f_def(path);  //from resources
@@ -50,6 +52,24 @@ private:
         return QJsonObject();
     }
 
+    //constructor helpers
+    bool __to_file(){
+
+        // default config
+        QFile f_def(path);  //from resources
+        if(f_def.open(QIODevice::WriteOnly | QIODevice::Text)){
+
+            //if(!par.isEmpty()){
+
+                QJsonDocument js_doc(par);
+                f_def.write(js_doc.toJson());
+                return true;
+            //}
+        }
+
+        return false;
+    }
+
 public slots:
 
     int on_done(int res, void *img){
@@ -60,20 +80,27 @@ public slots:
     }
 
     //slot co se zavola s prijmem povelu od plc
-    int on_order(unsigned ord, QByteArray par){
+    int on_order(unsigned ord, QByteArray raw){
 
-        par = par; //unused
         switch(ord){
 
             case VI_PLC_PC_TRIGGER: //meas
             {
                 //potvrdime prijem
+                error_mask = VI_ERR_OK;
+
                 t_comm_binary_rollidn reply_st1 = {(uint8_t)VI_PLC_PC_TRIGGER_ACK, error_mask, 0, 0};
                 QByteArray reply_by1((const char *)&reply_st1, sizeof(t_comm_binary_rollidn));
                 iface.on_write(reply_by1);
 
                 int res = on_trigger();
                 if(!res) res = on_trigger(); //opakujem 2x pokud se mereni nepovede
+
+                if((th.maxContRect.size.height * th.maxContRect.size.width) < ERR_MEAS_MINAREA_TH)
+                    error_mask |= VI_ERR_MEAS1;
+
+                if((ms.width * ms.height) < ERR_MEAS_MINAREA_TH)
+                    error_mask |= VI_ERR_MEAS2;
 
                 t_comm_binary_rollidn reply_st2 = {(uint8_t)VI_PLC_PC_RESULT, error_mask, ms.width, ms.height};
                 QByteArray reply_by2((const char *)&reply_st2, sizeof(t_comm_binary_rollidn));
@@ -102,7 +129,29 @@ public slots:
             break;
             case VI_PLC_PC_CALIBRATE:
             {
+                t_comm_binary_rollidn ord_st;
+                memcpy(&ord_st, raw.data(), sizeof(t_comm_binary_rollidn));
+
                 on_calibration();
+
+                if((th.maxContRect.size.height * th.maxContRect.size.width) < ERR_MEAS_MINAREA_TH)
+                    error_mask |= VI_ERR_MEAS1;
+
+                if((ms.width * ms.height) < ERR_MEAS_MINAREA_TH)
+                    error_mask |= VI_ERR_MEAS2;
+
+                if(error_mask == VI_ERR_OK){
+
+                    t_setup_entry c1; par.ask("calibr-LO-dia", &c1);
+                    c1.set(ord_st.width / ms.width);
+                    par.replace("calibr-LO-dia", c1);
+
+                    t_setup_entry c2; par.ask("calibr-HI-dia", &c2);
+                    c2.set(ord_st.height / ms.height);
+                    par.replace("calibr-HI-dia", c2);
+
+                    __to_file();
+                }
 
                 //potvrdime vysledek - pokud se nepovedlo vratime nejaky error bit + nesmyslne hodnoty mereni width & height
                 t_comm_binary_rollidn reply_st = {(uint8_t)VI_PLC_PC_CALIBRATE_ACK, error_mask, ms.width, ms.height};
@@ -149,7 +198,16 @@ public slots:
         vizual.show();
 
         cv::Mat src(info.h, info.w, CV_8UC4, img);
+
+        error_mask = VI_ERR_OK;
+
         ct.proc(0, &src);
+
+        if((th.maxContRect.size.height * th.maxContRect.size.width) < 100)
+            error_mask |= VI_ERR_MEAS1;
+
+        if((ms.width * ms.height) < 100)
+            error_mask |= VI_ERR_MEAS2;
 
         delete[] img;
 
@@ -177,13 +235,11 @@ public slots:
 
     int on_calibration(){
 
-        /*! \todo - volame triger a prepocet kalibracnich konstant
-        zapisem do konfigurace
-        */
-        return 1;
+        return on_trigger();
     }
 
 public:
+    QString path;
     t_collection par;
     bool abort;
     uint32_t error_mask;  //suma flagu e_vi_plc_pc_errors
@@ -216,11 +272,14 @@ public:
 
     t_roll_idn_collection(QString &js_config, QObject *parent = NULL):
         QObject(parent),
-        par(__set_from_file(js_config)),
+        path(js_config),
+        par(__from_file()),
+        cam_device(path),
+        cam_simul(path),
         abort(false),
-        ct(js_config),
-        th(js_config),
-        ms(js_config),
+        ct(path),
+        th(path),
+        ms(path),
         iface(par["tcp-server-port"].get().toInt(), this),
         store(QDir::currentPath() + "/storage")
     {

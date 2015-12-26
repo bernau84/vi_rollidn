@@ -31,7 +31,13 @@ public:
         return convertf(picFile, img, free, info);
     }
 
-    t_vi_camera_offline_file(){
+    t_vi_camera_offline_file()
+    {
+    }
+
+    t_vi_camera_offline_file(const QString &path):
+            i_vi_camera_base(path)
+    {
     }
 
     ~t_vi_camera_offline_file(){

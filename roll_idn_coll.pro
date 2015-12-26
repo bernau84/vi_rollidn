@@ -2,7 +2,7 @@ QT += core gui
 QT += widgets
 QT += network
 
-TARGET = roll_idn_coll2
+TARGET = roll_idn_coll3
 CONFIG += console
 CONFIG -= app_bundle
 
