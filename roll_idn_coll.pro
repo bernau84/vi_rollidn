@@ -2,13 +2,14 @@ QT += core gui
 QT += widgets
 QT += network
 
-TARGET = roll_idn_coll3
+TARGET = roll_idn_coll4
 CONFIG += console
 CONFIG -= app_bundle
 
 TEMPLATE = app
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    mainwindow.cpp
 
 INCLUDEPATH += "c:\Program Files\Basler\pylon 4\pylon\include"
 INCLUDEPATH += "c:\Program Files\Basler\pylon 4\genicam\library\CPP\include"
@@ -56,10 +57,14 @@ HEADERS += \
     cinterface/t_comm_parser_binary.h \
     cinterface/t_comm_parser_string.h \
     cinterface/cmd_line/t_comm_std_terminal.h \
-    cinterface/tcp_uni/t_comm_tcp_uni.h
+    cinterface/tcp_uni/t_comm_tcp_uni.h \
+    mainwindow.h
 
 DEFINES += USE_USB
 
 RESOURCES += \
     processing/defaults.qrc
+
+FORMS += \
+    mainwindow.ui
 

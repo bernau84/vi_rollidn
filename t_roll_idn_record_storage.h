@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <QFile>
+#include <QLabel>
 
 #define RECORD_PATTERN_LOG  "log%1.txt"
 #define RECORD_PATTERN_IMG  "pic%1.bmp"
@@ -26,21 +27,46 @@ public:
 
     }
 
-    void add(QString &log, QImage &img){
+    void increment(){
 
         m_counter = (m_counter + 1) % m_history;
 
         QString log_path = QString(RECORD_PATTERN_LOG).arg(m_counter);
         QFile::remove(log_path);
 
-        QFile log_file(log_path);
-        log_file.open(QIODevice::WriteOnly | QIODevice::Text);
-        log_file.write(log.toLatin1());
-        log_file.close();
-
         QString img_path = QString(RECORD_PATTERN_IMG).arg(m_counter);
         QFile::remove(img_path);
-        img.save(img_path);
+    }
+
+    void append(QString &log){
+
+        qDebug() << log;
+
+        QFile log_file(QString(RECORD_PATTERN_LOG).arg(m_counter));
+        log_file.open(QIODevice::Append | QIODevice::Text);
+        log_file.write(log.toLatin1());
+        log_file.close();
+    }
+
+    void insert(QImage &img){
+
+        if(!img.isNull()){
+
+            QLabel vizual;
+            vizual.setPixmap(QPixmap::fromImage(img));
+            vizual.show();
+
+            QString img_path = QString(RECORD_PATTERN_IMG).arg(m_counter);
+            QFile::remove(img_path);
+            img.save(img_path);
+        }
+    }
+
+    void add(QString &log, QImage &img){
+
+        increment();
+        append(log);
+        insert(img);
     }
 };
 

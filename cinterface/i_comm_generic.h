@@ -54,7 +54,7 @@ public:
 
         QString rawpar;
         for(int i=0; i < par.size(); i++)
-            rawpar += QString("0x%1(%2),").arg(int(par[i]), 2, 16, QChar('0')).arg(QChar((int(par[i]) > 32) ? par[i] : '?'));
+            rawpar += QString("0x%1(%2),").arg(uint8_t(par[i]), 2, 16, QChar('0')).arg(QChar((uint8_t(par[i]) > 32) ? par[i] : '?'));
 
         qDebug() << "ord" << QString::number(ord) << ": " << rawpar;
     }

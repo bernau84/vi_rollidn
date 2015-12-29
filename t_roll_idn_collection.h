@@ -2,7 +2,6 @@
 #define T_ROLL_IDN_COLLECTION
 
 #include <QObject>
-#include <QLabel>
 #include <QEventLoop>
 
 #include <stdio.h>
@@ -82,10 +81,24 @@ public slots:
     //slot co se zavola s prijmem povelu od plc
     int on_order(unsigned ord, QByteArray raw){
 
+        t_comm_binary_rollidn ord_st;
+        memcpy(&ord_st, raw.data(), sizeof(t_comm_binary_rollidn));
+
+        log.clear();
+        log += QString("rx: ord(%1),flags(0x%2),width(%3),height(%4)\r\n")
+                .arg(unsigned(ord_st.ord))
+                .arg(unsigned(ord_st.flags), 2, 16, QChar('0'))
+                .arg(ord_st.width / 10.0)
+                .arg(ord_st.height / 10.0);
+
         switch(ord){
 
             case VI_PLC_PC_TRIGGER: //meas
             {
+                log += QString("rx: TRIGGER\r\n");
+
+                store.increment();
+
                 //potvrdime prijem
                 error_mask = VI_ERR_OK;
 
@@ -102,25 +115,50 @@ public slots:
                 if((ms.width * ms.height) < ERR_MEAS_MINAREA_TH)
                     error_mask |= VI_ERR_MEAS2;
 
+                double ratio_w = par["calibr-LO-dia"].get().toDouble();
+                double ratio_h = par["calibr-HI-dia"].get().toDouble();
+
+                log += QString("meas-x: w=%1[mm],pix=%2,ratio=%3\r\n")
+                        .arg(ms.width * ratio_w)
+                        .arg(ms.width)
+                        .arg(ratio_w);
+
+                log += QString("meas-y: h=%1[mm],pix=%2,ratio=%3\r\n")
+                        .arg(ms.height * ratio_h)
+                        .arg(ms.height)
+                        .arg(ratio_h);
+
+                ms.width *= ratio_w;
+                ms.height *= ratio_h;
+
                 t_comm_binary_rollidn reply_st2 = {(uint8_t)VI_PLC_PC_RESULT, error_mask, ms.width, ms.height};
                 QByteArray reply_by2((const char *)&reply_st2, sizeof(t_comm_binary_rollidn));
                 iface.on_write(reply_by2);
 
-                return res;
+                log += QString("tx: RESULT\r\n");
+                log += QString("tx: ord(%1),flags(0x%2),width(%3),height(%4)\r\n")
+                        .arg(unsigned(reply_st2.ord))
+                        .arg(unsigned(reply_st2.flags), 2, 16, QChar('0'))
+                        .arg(reply_st2.width / 10.0)
+                        .arg(reply_st2.height / 10.0);
             }
             break;
             case VI_PLC_PC_ABORT:
+                log += QString("rx: ABORT\r\n");
                 on_abort(); //nastavi preruseni a ceka na jeho vyuhodnoceni
                 //a prekontrolujem jak na tom sme
             case VI_PLC_PC_READY:
             {
+                log += QString("rx: READY\r\n");
                 if(on_ready()){
                     //potvrdime prijem
+                    log += QString("tx: READY\r\n");
                     t_comm_binary_rollidn reply_st = {(uint8_t)VI_PLC_PC_CALIBRATE_ACK, error_mask, 0, 0};
                     QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
                     iface.on_write(reply_by);
                 } else {
                     //nejsme operabilni
+                    log += QString("tx: ERROR\r\n");
                     t_comm_binary_rollidn reply_st = {(uint8_t)VI_PLC_PC_ERROR, error_mask, 0, 0};
                     QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
                     iface.on_write(reply_by);
@@ -129,8 +167,8 @@ public slots:
             break;
             case VI_PLC_PC_CALIBRATE:
             {
-                t_comm_binary_rollidn ord_st;
-                memcpy(&ord_st, raw.data(), sizeof(t_comm_binary_rollidn));
+                log += QString("rx: CALIBRATE\r\n");
+                store.increment();
 
                 on_calibration();
 
@@ -146,9 +184,19 @@ public slots:
                     c1.set(ord_st.width / ms.width);
                     par.replace("calibr-LO-dia", c1);
 
+                    log += QString("cal-x: ref=%1[mm],pix=%2,ratio=%3\r\n")
+                            .arg(ord_st.width)
+                            .arg(ms.width)
+                            .arg(ord_st.width / ms.width);
+
                     t_setup_entry c2; par.ask("calibr-HI-dia", &c2);
                     c2.set(ord_st.height / ms.height);
                     par.replace("calibr-HI-dia", c2);
+
+                    log += QString("cal-y: ref=%1[mm],pix=%2,ratio=%3\r\n")
+                            .arg(ord_st.height)
+                            .arg(ms.height)
+                            .arg(ord_st.height / ms.height);
 
                     __to_file();
                 }
@@ -157,10 +205,18 @@ public slots:
                 t_comm_binary_rollidn reply_st = {(uint8_t)VI_PLC_PC_CALIBRATE_ACK, error_mask, ms.width, ms.height};
                 QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
                 iface.on_write(reply_by);
+
+                log += QString("tx: CALIBRATE_ACK\r\n");
+                log += QString("tx: ord(%1),flags(0x%2),width(%3),height(%4)\r\n")
+                        .arg(unsigned(reply_st.ord))
+                        .arg(unsigned(reply_st.flags), 2, 16, QChar('0'))
+                        .arg(reply_st.width / 10.0)
+                        .arg(reply_st.height / 10.0);
             }
             break;
         }
 
+        store.append(log);
         return 0;
     }
 
@@ -191,31 +247,14 @@ public slots:
             loop.processEvents();
         }
 
-        QImage snapshot(img, info.w, info.h, (QImage::Format)info.format);
-
-        QLabel vizual;
-        vizual.setPixmap(QPixmap::fromImage(snapshot));
-        vizual.show();
+        snapshot = QImage(img, info.w, info.h, (QImage::Format)info.format);
+        store.insert(snapshot);
 
         cv::Mat src(info.h, info.w, CV_8UC4, img);
-
-        error_mask = VI_ERR_OK;
-
         ct.proc(0, &src);
 
-        if((th.maxContRect.size.height * th.maxContRect.size.width) < 100)
-            error_mask |= VI_ERR_MEAS1;
-
-        if((ms.width * ms.height) < 100)
-            error_mask |= VI_ERR_MEAS2;
-
         delete[] img;
-
-        //vyhodnoceni vysledku
-        int res = 1;
-        /*! \todo - kouknem na zmerene rozmery, konturu */
-
-        return res;
+        return 1;
     }
 
     int on_abort(){
@@ -239,7 +278,10 @@ public slots:
     }
 
 public:
+    QImage snapshot;
     QString path;
+    QString log;
+
     t_collection par;
     bool abort;
     uint32_t error_mask;  //suma flagu e_vi_plc_pc_errors
@@ -259,14 +301,6 @@ public:
 
         cam_device.init();
         cam_simul.init();
-
-//#ifndef QT_DEBUG
-//        //cekani na pripojeni plc
-//        QEventLoop loop;
-//        while(iface.health() != COMMSTA_PREPARED)
-//            loop.processEvents();
-//#endif
-
         return 1;
     }
 
