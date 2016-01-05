@@ -14,8 +14,8 @@ class t_vi_proc_roll_approx : public i_proc_stage
 {
 
 public:
-    float width;  //output result
-    float height;
+    float length;  //output result
+    float diameter;
     float left_corr;
     float right_corr;
 
@@ -58,10 +58,10 @@ private:
 
         vector<Point> locations; Vec4f line;   // output, locations of non-zero pixels; vx, vy, x0, y0
 
-        int lwidth = to - from;
+        int lheight = to - from;
 
         for(int y = from; y < to; y++)
-            for(int x = 0; x < width/4; x++)
+            for(int x = 0; x <diameter/4; x++)  //D/4 je omezeni na maximalni moznou delku kratsi poloosy elipsy
                 if(out.at<uchar>(Point(x, y))){
 
                     locations.push_back(Point(x, y - from));
@@ -71,16 +71,16 @@ private:
                             for(unsigned i=0; i<locations.size(); i++){
 
                                 Point p(locations[i].x, locations[i].y + from);
-                                cv::line(out, p, p, Scalar(64, 64, 64), 3, 8);
+                                cv::line(out, p, p, Scalar(192, 64, 64), 3, 8);
                             }
 
         Mat trans = Mat::zeros(out.size(), CV_8UC1);
         vector<Point> locations_t;
         for(unsigned i=0; i<locations.size(); i++){  //little magic - transform eliptic(quadratic) eq to linear
-                                                    //with knowledge of bigger radius (width) we get
+                                                    //with knowledge of bigger radius (height) we get
 
-            float y_t = locations[i].y - lwidth/2; //now in range +/-width/2
-            Point p(locations[i].x, lwidth * sqrt(1 - pow(y_t/(lwidth/2), 2)));  //in picture coords
+            float y_t = locations[i].y - lheight/2; //now in range +/-width/2
+            Point p(locations[i].x, lheight * sqrt(1 - pow(y_t/(lheight/2), 2)));  //in picture coords
             locations_t.push_back(p);
 
 #ifdef xQT_DEBUG
@@ -121,7 +121,7 @@ public:
 public slots:
     int proc(int p1, void *p2){
 
-        width = height = 0.0;
+        length = diameter = 0.0;
         left_corr = right_corr = 0.0;
 
         p1 = p1;
@@ -156,8 +156,8 @@ public slots:
                 cv::imshow("Cylinder diameter", out.t());
 #endif // QT_DEBUG
 
-        width = out.cols - line2[2] - line1[2];
-        qDebug() << "Me-Width:" << QString::number(width);
+        diameter = out.cols - line2[2] - line1[2];
+        qDebug() << "Me-Diameter:" << QString::number(diameter);
 
         //najdem pruseciky horni a spodni aproximace s levym a pravym celem
         //to definuje mez pro hledani elipticke aproximace cela
@@ -181,7 +181,7 @@ public slots:
         left_corr = fabs((line3[3] / (line3[1] + 1e-6)) * line3[0]) + line3[2];  //shift calc - ie. transform from parametric to y=f(x) eq.
         qDebug() << "Correction-Left:" << QString::number(left_corr);
 
-                cv::ellipse(out, Point(left_corr, line1[2] + width/2), Size(left_corr, width/2),
+                cv::ellipse(out, Point(left_corr, line1[2] + diameter/2), Size(left_corr, diameter/2),
                         0.0, 0.0, 360, Scalar(128, 128 ,128), 2, 4);
 #ifdef xQT_DEBUG
                 cv::namedWindow("Left elipse", CV_WINDOW_AUTOSIZE);
@@ -194,13 +194,13 @@ public slots:
         right_corr = fabs((line4[3] / (line4[1] + 1e-6)) * line4[0]) + line4[2];
         qDebug() << "Correction-Right:" << QString::number(right_corr);
 
-                cv::ellipse(out, Point(right_corr, line1[2] + width/2), Size(right_corr, width/2),
+                cv::ellipse(out, Point(right_corr, line1[2] + diameter/2), Size(right_corr, diameter/2),
                         0.0, 0.0, 360, Scalar(128, 128, 128), 2, 4);
                 cv::namedWindow("Cylinder bases", CV_WINDOW_AUTOSIZE);
                 cv::imshow("Cylinder bases", out);
 
-        height = out.cols - left_corr - right_corr;
-        qDebug() << "Height:" << QString::number(height);
+        length = out.cols - left_corr - right_corr;
+        qDebug() << "Height:" << QString::number(length);
 
         emit next(1, src);
         return 1;

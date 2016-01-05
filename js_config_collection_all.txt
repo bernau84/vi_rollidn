@@ -3,13 +3,13 @@
                 "__info": "tcp listener port",
                 "__def": 9100
         },
-        "calibr-LO-dia": {
+        "calibr-L": {
                 "__info": "calibration constant for smallest roll diameter [pix / mm]",
                 "__def": 1.0,
                 "__min": 0.001,
                 "__max": 1000
         },
-        "calibr-HI-dia": {
+        "calibr-D": {
                 "__info": "calibration constant for biggest roll diameter [pix / mm]",
                 "__def": 1.0,
                 "__min": 0.001,

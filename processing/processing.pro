@@ -9,7 +9,7 @@ QT       += core
 CONFIG   += console
 CONFIG   -= app_bundle
 
-TARGET = processing7
+TARGET = processing
 TEMPLATE = app
 
 SOURCES += main.cpp
@@ -19,7 +19,8 @@ HEADERS  += \
     ../t_vi_setup.h \
     t_vi_proc_roi_grayscale.h \
     t_vi_proc_threshold_cont.h \
-    t_vi_proc_roll_approx.h
+    t_vi_proc_roll_approx.h \
+    t_vi_proc_roi_edgemax.h
 
 INCLUDEPATH += "C:\\opencv\\build\\include"
 

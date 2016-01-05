@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QEventLoop>
+#include <QtEndian>
 
 #include <stdio.h>
 
@@ -84,6 +85,19 @@ public slots:
         t_comm_binary_rollidn ord_st;
         memcpy(&ord_st, raw.data(), sizeof(t_comm_binary_rollidn));
 
+        uint32_t b_width = ((ord_st.width >> 24) & 0xFF) << 0 |
+                ((ord_st.width >> 16) & 0xFF) << 8 |
+                ((ord_st.width >> 8) & 0xFF) << 16 |
+                ((ord_st.width >> 0) & 0xFF) << 24;
+
+        uint32_t b_heigth = ((ord_st.height >> 24) & 0xFF) << 0 |
+                ((ord_st.height >> 16) & 0xFF) << 8 |
+                ((ord_st.height >> 8) & 0xFF) << 16 |
+                ((ord_st.height >> 0) & 0xFF) << 24;
+
+        ord_st.height = b_heigth;
+        ord_st.width = b_width;
+
         log.clear();
         log += QString("rx: ord(%1),flags(0x%2),width(%3),height(%4)\r\n")
                 .arg(unsigned(ord_st.ord))
@@ -102,7 +116,7 @@ public slots:
                 //potvrdime prijem
                 error_mask = VI_ERR_OK;
 
-                t_comm_binary_rollidn reply_st1 = {(uint8_t)VI_PLC_PC_TRIGGER_ACK, error_mask, 0, 0};
+                t_comm_binary_rollidn reply_st1 = {(uint16_t)VI_PLC_PC_TRIGGER_ACK, error_mask, 0, 0};
                 QByteArray reply_by1((const char *)&reply_st1, sizeof(t_comm_binary_rollidn));
                 iface.on_write(reply_by1);
 
@@ -112,40 +126,55 @@ public slots:
                 if((th.maxContRect.size.height * th.maxContRect.size.width) < ERR_MEAS_MINAREA_TH)
                     error_mask |= VI_ERR_MEAS1;
 
-                if((ms.width * ms.height) < ERR_MEAS_MINAREA_TH)
+                if((ms.diameter * ms.length) < ERR_MEAS_MINAREA_TH)
                     error_mask |= VI_ERR_MEAS2;
 
-                double ratio_w = par["calibr-LO-dia"].get().toDouble();
-                double ratio_h = par["calibr-HI-dia"].get().toDouble();
+                double ratio_l = par["calibr-L"].get().toDouble();
+                double ratio_d = par["calibr-D"].get().toDouble();
 
                 log += QString("meas-x: w=%1[mm],pix=%2,ratio=%3\r\n")
-                        .arg(ms.width * ratio_w)
-                        .arg(ms.width)
-                        .arg(ratio_w);
+                        .arg(ms.length * ratio_l)
+                        .arg(ms.length)
+                        .arg(ratio_l);
 
                 log += QString("meas-y: h=%1[mm],pix=%2,ratio=%3\r\n")
-                        .arg(ms.height * ratio_h)
-                        .arg(ms.height)
-                        .arg(ratio_h);
+                        .arg(ms.diameter * ratio_d)
+                        .arg(ms.diameter)
+                        .arg(ratio_d);
 
-                ms.width *= ratio_w;
-                ms.height *= ratio_h;
+                ms.diameter *= ratio_d;
+                ms.length *= ratio_l;
 
-                t_comm_binary_rollidn reply_st2 = {(uint8_t)VI_PLC_PC_RESULT, error_mask, ms.width, ms.height};
+                uint32_t b_dia, s_dia = ms.diameter * 10;
+                //qToBigEndian(ms.width*10, (uchar *)&i_width);
+                uint32_t b_len, s_len = ms.length * 10;
+                //qToBigEndian(ms.height*10, (uchar *)&i_heigth);
+
+                b_len = ((s_len >> 24) & 0xFF) << 0 |
+                        ((s_len >> 16) & 0xFF) << 8 |
+                        ((s_len >> 8) & 0xFF) << 16 |
+                        ((s_len >> 0) & 0xFF) << 24;
+
+                b_dia = ((s_dia >> 24) & 0xFF) << 0 |
+                        ((s_dia >> 16) & 0xFF) << 8 |
+                        ((s_dia >> 8) & 0xFF) << 16 |
+                        ((s_dia >> 0) & 0xFF) << 24;
+
+                t_comm_binary_rollidn reply_st2 = {(uint16_t)VI_PLC_PC_RESULT, error_mask, b_len, b_dia};
                 QByteArray reply_by2((const char *)&reply_st2, sizeof(t_comm_binary_rollidn));
                 iface.on_write(reply_by2);
 
                 log += QString("tx: RESULT\r\n");
-                log += QString("tx: ord(%1),flags(0x%2),width(%3),height(%4)\r\n")
+                log += QString("tx: ord(%1),flags(0x%2),len(%3),dia(%4)\r\n")
                         .arg(unsigned(reply_st2.ord))
                         .arg(unsigned(reply_st2.flags), 2, 16, QChar('0'))
-                        .arg(reply_st2.width / 10.0)
-                        .arg(reply_st2.height / 10.0);
+                        .arg(reply_st2.width)
+                        .arg(reply_st2.height);
             }
             break;
             case VI_PLC_PC_ABORT:
                 log += QString("rx: ABORT\r\n");
-                on_abort(); //nastavi preruseni a ceka na jeho vyuhodnoceni
+                on_abort(); //nastavi preruseni a ceka na jeho vyhodnoceni
                 //a prekontrolujem jak na tom sme
             case VI_PLC_PC_READY:
             {
@@ -153,13 +182,13 @@ public slots:
                 if(on_ready()){
                     //potvrdime prijem
                     log += QString("tx: READY\r\n");
-                    t_comm_binary_rollidn reply_st = {(uint8_t)VI_PLC_PC_CALIBRATE_ACK, error_mask, 0, 0};
+                    t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_READY, 0/*error_mask*/, 0, 0};
                     QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
                     iface.on_write(reply_by);
                 } else {
                     //nejsme operabilni
                     log += QString("tx: ERROR\r\n");
-                    t_comm_binary_rollidn reply_st = {(uint8_t)VI_PLC_PC_ERROR, error_mask, 0, 0};
+                    t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_ERROR, error_mask, 0, 0};
                     QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
                     iface.on_write(reply_by);
                 }
@@ -170,48 +199,52 @@ public slots:
                 log += QString("rx: CALIBRATE\r\n");
                 store.increment();
 
+                error_mask = VI_ERR_OK;
+
                 on_calibration();
 
                 if((th.maxContRect.size.height * th.maxContRect.size.width) < ERR_MEAS_MINAREA_TH)
                     error_mask |= VI_ERR_MEAS1;
 
-                if((ms.width * ms.height) < ERR_MEAS_MINAREA_TH)
+                if((ms.diameter * ms.length) < ERR_MEAS_MINAREA_TH)
                     error_mask |= VI_ERR_MEAS2;
 
                 if(error_mask == VI_ERR_OK){
 
-                    t_setup_entry c1; par.ask("calibr-LO-dia", &c1);
-                    c1.set(ord_st.width / ms.width);
-                    par.replace("calibr-LO-dia", c1);
+                    double c1d = (ord_st.width / 10.0) / ms.length;
+                    t_setup_entry c1; par.ask("calibr-L", &c1);
+                    c1.set(c1d);
+                    par.replace("calibr-L", c1);
 
                     log += QString("cal-x: ref=%1[mm],pix=%2,ratio=%3\r\n")
                             .arg(ord_st.width)
-                            .arg(ms.width)
-                            .arg(ord_st.width / ms.width);
+                            .arg(ms.length)
+                            .arg(ord_st.width / ms.length);
 
-                    t_setup_entry c2; par.ask("calibr-HI-dia", &c2);
-                    c2.set(ord_st.height / ms.height);
-                    par.replace("calibr-HI-dia", c2);
+                    double c2d = (ord_st.height / 10.0) / ms.diameter;
+                    t_setup_entry c2; par.ask("calibr-D", &c2);
+                    c2.set(c2d);
+                    par.replace("calibr-D", c2);
 
                     log += QString("cal-y: ref=%1[mm],pix=%2,ratio=%3\r\n")
                             .arg(ord_st.height)
-                            .arg(ms.height)
-                            .arg(ord_st.height / ms.height);
+                            .arg(ms.diameter)
+                            .arg(ord_st.height / ms.diameter);
 
                     __to_file();
                 }
 
                 //potvrdime vysledek - pokud se nepovedlo vratime nejaky error bit + nesmyslne hodnoty mereni width & height
-                t_comm_binary_rollidn reply_st = {(uint8_t)VI_PLC_PC_CALIBRATE_ACK, error_mask, ms.width, ms.height};
+                t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_CALIBRATE_ACK, error_mask, ms.length, ms.diameter};
                 QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
                 iface.on_write(reply_by);
 
                 log += QString("tx: CALIBRATE_ACK\r\n");
-                log += QString("tx: ord(%1),flags(0x%2),width(%3),height(%4)\r\n")
+                log += QString("tx: ord(%1),flags(0x%2),len(%3),dia(%4)\r\n")
                         .arg(unsigned(reply_st.ord))
                         .arg(unsigned(reply_st.flags), 2, 16, QChar('0'))
-                        .arg(reply_st.width / 10.0)
-                        .arg(reply_st.height / 10.0);
+                        .arg(reply_st.width)
+                        .arg(reply_st.height);
             }
             break;
         }
