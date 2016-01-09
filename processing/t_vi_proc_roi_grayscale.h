@@ -31,6 +31,9 @@ public:
         qDebug() << "ColorTr & ROI import setup:" << roi.x << roi.y << roi.width << roi.height;
     }
 
+
+    virtual ~t_vi_proc_colortransf(){;}
+
 public slots:
     int proc(int p1, void *p2){
 
@@ -51,7 +54,6 @@ public slots:
         return 1;
     }
 
-    ~t_vi_proc_colortransf(){;}
 };
 
 #endif // T_VI_PROC_COLORTRANSF_H

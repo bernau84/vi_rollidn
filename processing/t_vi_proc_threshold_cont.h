@@ -40,6 +40,9 @@ public:
         qDebug() << "Threshold & contours setup:" << thresh << max_thresh << min_contour_area;
     }
 
+
+    virtual ~t_vi_proc_threshold(){;}
+
 public slots:
     int proc(int p1, void *p2){
 
@@ -130,7 +133,6 @@ public slots:
         return 1;
     }
 
-    ~t_vi_proc_threshold(){;}
 };
 
 #endif // T_VI_PROC_THRESHOLD_H

@@ -118,6 +118,9 @@ public:
 
     }
 
+
+    virtual ~t_vi_proc_roll_approx(){;}
+
 public slots:
     int proc(int p1, void *p2){
 
@@ -205,8 +208,6 @@ public slots:
         emit next(1, src);
         return 1;
     }
-
-    ~t_vi_proc_roll_approx(){;}
 };
 
 #endif // T_VI_PROC_ROLL_APPROX

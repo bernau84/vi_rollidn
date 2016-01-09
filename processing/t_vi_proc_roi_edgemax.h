@@ -82,6 +82,9 @@ public:
 
     }
 
+
+    virtual ~t_vi_proc_roi_canny(){;}
+
 public slots:
     int proc(int p1, void *p2){
 
@@ -104,8 +107,6 @@ public slots:
         emit next(1, psrc);
         return 1;
     }
-
-    ~t_vi_proc_roi_canny(){;}
 };
 
 #endif // T_VI_PROC_ROI_EDGEMAX

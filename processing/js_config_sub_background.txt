@@ -1,0 +1,12 @@
+{
+        "background": {
+                "__info": "background bmp file path",
+                "__def": "back.bmp",
+        },
+        "threshold": {
+                "__info": "threshold binary value",
+                "__def": 20,
+                "__min": 1,
+                "__max": 255
+        }
+ }
