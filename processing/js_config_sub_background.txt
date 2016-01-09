@@ -3,7 +3,7 @@
                 "__info": "background bmp file path",
                 "__def": "back.bmp",
         },
-        "threshold": {
+        "sub-threshold": {
                 "__info": "threshold binary value",
                 "__def": 20,
                 "__min": 1,

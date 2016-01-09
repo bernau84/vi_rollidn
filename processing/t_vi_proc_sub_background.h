@@ -26,7 +26,7 @@ public:
         thresh = 20;
         bpath = QString("back.bmp");
 
-        thresh = par["threshold"].get().toInt();
+        thresh = par["sub-threshold"].get().toInt();
         bpath = par["background"].get().toString();
 
         qDebug() << "Sub background image / diff-threshold:" << path << thresh;
@@ -41,8 +41,14 @@ public slots:
 
         Mat *psrc = (Mat *)p2;
         //Mat bck = imread(bpath.toLatin1().data());
-        Mat bck = imread("c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\back.bmp");
+        Mat tbck = imread("c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\back.bmp");
+        Mat bck; cvtColor(tbck, bck, CV_BGR2BGRA);
+        Mat imp; cvtColor(*psrc, imp, CV_BGR2BGRA);
         Mat out;
+
+        qDebug() << "bck: " << bck.elemSize();
+        qDebug() << "src: " << psrc->elemSize();
+        qDebug() << "img: " << imp.elemSize();
 
         if(bck.empty()){
 
@@ -51,7 +57,7 @@ public slots:
         }
 
         //substract background and saturate
-        cv::absdiff(*psrc, bck, out);
+        cv::absdiff(imp, bck, out);
 
         //hard limit - convert to binary
         cv::threshold(out, bck, 100/*thresh*/, 255, THRESH_BINARY);

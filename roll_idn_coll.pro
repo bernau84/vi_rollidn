@@ -58,7 +58,8 @@ HEADERS += \
     cinterface/t_comm_parser_string.h \
     cinterface/cmd_line/t_comm_std_terminal.h \
     cinterface/tcp_uni/t_comm_tcp_uni.h \
-    mainwindow.h
+    mainwindow.h \
+    processing/t_vi_proc_sub_background.h
 
 DEFINES += USE_USB
 

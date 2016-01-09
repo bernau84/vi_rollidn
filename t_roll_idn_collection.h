@@ -17,6 +17,7 @@
 #include "processing/t_vi_proc_roi_grayscale.h"
 #include "processing/t_vi_proc_threshold_cont.h"
 #include "processing/t_vi_proc_roll_approx.h"
+#include "processing/t_vi_proc_sub_background.h"
 
 #include "t_vi_setup.h"
 #include "t_vi_specification.h"
@@ -284,7 +285,7 @@ public slots:
         store.insert(snapshot);
 
         cv::Mat src(info.h, info.w, CV_8UC4, img);
-        ct.proc(0, &src);
+        bc.proc(0, &src);
 
         delete[] img;
         return 1;
@@ -325,6 +326,7 @@ public:
     t_vi_proc_colortransf ct;
     t_vi_proc_threshold th;
     t_vi_proc_roll_approx ms;
+    t_vi_proc_sub_backgr bc;
 
     t_comm_tcp_rollidn iface;
 
@@ -347,10 +349,12 @@ public:
         ct(path),
         th(path),
         ms(path),
+        bc(path),
         iface(par["tcp-server-port"].get().toInt(), this),
         store(QDir::currentPath() + "/storage")
     {
         //zretezeni analyz
+        QObject::connect(&bc, SIGNAL(next(int, void *)), &ct, SLOT(proc(int, void *)));
         QObject::connect(&ct, SIGNAL(next(int, void *)), &th, SLOT(proc(int, void *)));
         QObject::connect(&th, SIGNAL(next(int, void *)), &ms, SLOT(proc(int, void *)));
 
