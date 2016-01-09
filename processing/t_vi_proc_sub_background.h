@@ -46,9 +46,9 @@ public slots:
         Mat imp; cvtColor(*psrc, imp, CV_BGR2BGRA);
         Mat out;
 
-        qDebug() << "bck: " << bck.elemSize();
-        qDebug() << "src: " << psrc->elemSize();
-        qDebug() << "img: " << imp.elemSize();
+//        qDebug() << "bck: " << bck.elemSize();
+//        qDebug() << "src: " << psrc->elemSize();
+//        qDebug() << "img: " << imp.elemSize();
 
         if(bck.empty()){
 
