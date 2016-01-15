@@ -28,7 +28,7 @@ private:
         vector<Point> locations; Vec4f line;   // output, locations of non-zero pixels; vx, vy, x0, y0
 
         for(int y = from; y < to; y++)
-            for(int x = 0; x < out.cols; x++)
+            for(int x = 0; x < out.cols/4; x++)
                 if(out.at<uchar>(Point(x, y))){
 
                     locations.push_back(Point(x, y));
@@ -61,7 +61,7 @@ private:
         int lheight = to - from;
 
         for(int y = from; y < to; y++)
-            for(int x = 0; x <diameter/4; x++)  //D/4 je omezeni na maximalni moznou delku kratsi poloosy elipsy
+            for(int x = diameter/4; x >= 0; x--)  //D/4 je omezeni na maximalni moznou delku kratsi poloosy elipsy
                 if(out.at<uchar>(Point(x, y))){
 
                     locations.push_back(Point(x, y - from));
@@ -83,7 +83,7 @@ private:
             Point p(locations[i].x, lheight * sqrt(1 - pow(y_t/(lheight/2), 2)));  //in picture coords
             locations_t.push_back(p);
 
-#ifdef xQT_DEBUG
+#ifdef QT_DEBUG
             cv::line(trans, p, p, Scalar(255, 255, 255), 2, 8);
 #endif //QT_DEBUG
         }
@@ -97,12 +97,18 @@ private:
                     "x0" << QString::number(line[2]) <<
                     "y0" << QString::number(line[3]);
 
-#ifdef xQT_DEBUG
+#ifdef QT_DEBUG
                 cv::line(trans,
                          Point(line[2]-line[0]*200, line[3]-line[1]*200),
                          Point(line[2]+line[0]*200, line[3]+line[1]*200),
                          Scalar(128, 128 ,128),
                          3, CV_AA);
+
+                cv::line(trans,
+                         Point(line[2], from),
+                         Point(line[2], to),
+                         Scalar(64, 64 ,64),
+                         1, CV_AA);
 
                 imshow("Trans", trans);
 #endif //QT_DEBUG
@@ -181,10 +187,13 @@ public slots:
         tmp = out.t(); cv::flip(tmp, out, 0); //*src;  //original
         //Vec4f line3 = eliptic_approx(line1[2], line1[2] + width); //zjednoduseno - kraj definujem jen strednim prumerem
         Vec4f line3 = eliptic_approx(left_s1, out.rows - left_s2);
-        left_corr = fabs((line3[3] / (line3[1] + 1e-6)) * line3[0]) + line3[2];  //shift calc - ie. transform from parametric to y=f(x) eq.
+        double laxis = fabs((line3[3] / (line3[1] + 1e-6) * line3[0]));
+        double ldia = out.rows - left_s2 - left_s1;
+        qDebug() << "laxis" << QString::number(laxis);
+        left_corr = line3[2] + laxis;  //shift calc - ie. transform from parametric to y=f(x) eq.
         qDebug() << "Correction-Left:" << QString::number(left_corr);
 
-                cv::ellipse(out, Point(left_corr, line1[2] + diameter/2), Size(left_corr, diameter/2),
+                cv::ellipse(out, Point(left_corr, line1[2] + diameter/2), Size(abs(laxis), abs(ldia/2)),
                         0.0, 0.0, 360, Scalar(128, 128 ,128), 2, 4);
 #ifdef xQT_DEBUG
                 cv::namedWindow("Left elipse", CV_WINDOW_AUTOSIZE);
@@ -194,10 +203,13 @@ public slots:
         ///prava
         tmp = out; cv::flip(tmp, out, 1);
         Vec4f line4 = eliptic_approx(right_s1, out.rows - right_s2);
-        right_corr = fabs((line4[3] / (line4[1] + 1e-6)) * line4[0]) + line4[2];
+        double rdia = out.rows - right_s2 - right_s1;
+        double raxis = fabs((line4[3] / (line4[1] + 1e-6) * line4[0]));
+        qDebug() << "raxis" << QString::number(raxis);
+        right_corr = line4[2] + raxis;
         qDebug() << "Correction-Right:" << QString::number(right_corr);
 
-                cv::ellipse(out, Point(right_corr, line1[2] + diameter/2), Size(right_corr, diameter/2),
+                cv::ellipse(out, Point(right_corr, line1[2] + diameter/2), Size(abs(raxis), abs(rdia/2)),
                         0.0, 0.0, 360, Scalar(128, 128, 128), 2, 4);
                 cv::namedWindow("Cylinder bases", CV_WINDOW_AUTOSIZE);
                 cv::imshow("Cylinder bases", out);

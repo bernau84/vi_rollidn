@@ -23,7 +23,7 @@ public:
     t_vi_proc_sub_backgr(QString &path =  QString(":/js_config_sub_background.txt")):
         i_proc_stage(path)
     {
-        thresh = 20;
+        thresh = 30;
         bpath = QString("back.bmp");
 
         thresh = par["sub-threshold"].get().toInt();
@@ -38,34 +38,49 @@ public slots:
     int proc(int p1, void *p2){
 
         p1 = p1;
+        Mat tsrc = *(Mat *)p2;
 
-        Mat *psrc = (Mat *)p2;
-        //Mat bck = imread(bpath.toLatin1().data());
-        Mat tbck = imread("c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\back.bmp");
-        Mat bck; cvtColor(tbck, bck, CV_BGR2BGRA);
-        Mat imp; cvtColor(*psrc, imp, CV_BGR2BGRA);
-        Mat out;
+        //Mat tbck = imread(bpath.toLatin1().data());
+        Mat tbck; // = imread("c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\back.bmp");
+        if(tbck.empty()){
 
-//        qDebug() << "bck: " << bck.elemSize();
-//        qDebug() << "src: " << psrc->elemSize();
-//        qDebug() << "img: " << imp.elemSize();
-
-        if(bck.empty()){
-
-            emit next(1, psrc);
+            emit next(1, &tsrc);
             return 0;
         }
 
+        //sjednoceni formatu
+        Mat bck; cvtColor(tbck, bck, CV_BGR2RGB);
+        Mat imp; cvtColor(tsrc, imp, CV_BGR2RGB);
+        Mat out(imp.rows, imp.cols, CV_8UC3);
+
+        int L1 = 32;
+        int L2 = 16;
+
         //substract background and saturate
-        cv::absdiff(imp, bck, out);
+        //cv::absdiff(imp, bck, out);
 
-        //hard limit - convert to binary
-        cv::threshold(out, bck, 100/*thresh*/, 255, THRESH_BINARY);
-        out = bck;
+        for(int y = 0; y < imp.rows; y++)
+            for(int x = 0; x < imp.cols; x++)
+                for(int r=0; r < 3; r++){ //pres barvicky
 
-        //create window
-        namedWindow("Threshold substracted background", CV_WINDOW_AUTOSIZE );
-        imshow("Threshold substracted background", out );
+                    uchar c = imp.at<cv::Vec3b>(y,x)[r];  //mereni
+                    uchar b = bck.at<cv::Vec3b>(y,x)[r];  //pozadi
+                    int d = (int)c - (int)b; //vysledek
+
+                    //baze pravidel pro odecitani pozadi
+                    if(d < 0){
+
+                        if(d < L1) d = 0; //velka zmena - pozadi svetlejsi - divne, dame 0
+                        else d = -d;  //popredi je nevyznamne - berem absolutni hodnotu rozdilu
+
+                    } else {
+
+                        if((c > L2) && (d > L2)) d = c; //popredi vyznamne a rozdil velky - kasle na nej
+                    }
+
+                    if((d *= 2) > 255) d = 255;
+                    out.at<cv::Vec3b>(y,x)[r] = d;
+                }
 
         emit next(1, &out);
         return 1;
