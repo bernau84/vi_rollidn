@@ -41,7 +41,7 @@ public slots:
         Mat tsrc = *(Mat *)p2;
 
         //Mat tbck = imread(bpath.toLatin1().data());
-        Mat tbck; // = imread("c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\back.bmp");
+        Mat tbck = imread("c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\back.bmp");
         if(tbck.empty()){
 
             emit next(1, &tsrc);

@@ -21,8 +21,8 @@ int main(int argc, char *argv[])
     /// Load source image and convert it to gray
     //Mat src = imread( "c:\\Users\\bernau84\\turnov-meroll-daylight.bmp" );
     //Mat src = imread( "c:\\Users\\bernau84\\Documents\\sandbox\\build-roll_idn_coll-Desktop_Qt_5_4_2_MSVC2010_OpenGL_32bit-Debug\\pic29.bmp", 1 );
-    //Mat src = imread( "c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\smp.bmp" );
-    Mat src = imread( "c:\\Users\\bernau84\\Pictures\\test_roll_idn3.bmp");
+    Mat src = imread( "c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\smp.bmp" );
+    //Mat src = imread( "c:\\Users\\bernau84\\Pictures\\test_roll_idn3.bmp");
 
     t_vi_proc_colortransf ct;
     t_vi_proc_threshold th;

@@ -64,7 +64,7 @@ private:
             for(int x = diameter/4; x >= 0; x--)  //D/4 je omezeni na maximalni moznou delku kratsi poloosy elipsy
                 if(out.at<uchar>(Point(x, y))){
 
-                    locations.push_back(Point(x, y - from));
+                    locations.push_back(Point(x, y - from));  //from 0 to lheight
                     break;
                 }
 
@@ -79,8 +79,9 @@ private:
         for(unsigned i=0; i<locations.size(); i++){  //little magic - transform eliptic(quadratic) eq to linear
                                                     //with knowledge of bigger radius (height) we get
 
-            float y_t = locations[i].y - lheight/2; //now in range +/-width/2
-            Point p(locations[i].x, lheight * sqrt(1 - pow(y_t/(lheight/2), 2)));  //in picture coords
+            float y_t = (1.0 * (locations[i].y - lheight/2)) / (lheight/2); //now in range <-1, +1>
+            y_t = lheight/2 * sqrt(1 - pow(y_t, 2));
+            Point p(locations[i].x, y_t);  //in picture coords <0, lheight>
             locations_t.push_back(p);
 
 #ifdef QT_DEBUG
@@ -90,6 +91,90 @@ private:
 
         if(locations_t.size())
             cv::fitLine(locations_t, line, CV_DIST_L2, 0, 0.01, 0.01);
+
+        qDebug() << "line" <<
+                    "vx" << QString::number(line[0]) <<
+                    "vy" << QString::number(line[1]) <<
+                    "x0" << QString::number(line[2]) <<
+                    "y0" << QString::number(line[3]);
+
+#ifdef QT_DEBUG
+                cv::line(trans,
+                         Point(line[2]-line[0]*200, line[3]-line[1]*200),
+                         Point(line[2]+line[0]*200, line[3]+line[1]*200),
+                         Scalar(128, 128 ,128),
+                         3, CV_AA);
+
+                cv::line(trans,
+                         Point(line[2], from),
+                         Point(line[2], to),
+                         Scalar(64, 64 ,64),
+                         1, CV_AA);
+
+                imshow("Trans", trans);
+#endif //QT_DEBUG
+
+        return line;
+    }
+
+
+    Vec4f eliptic_approx_hough(int from, int to){
+
+        vector<Point> locations; Vec4f line;   // output, locations of non-zero pixels; vx, vy, x0, y0
+
+        int A = (to - from) / 2;  //hlavni poloosa
+        int Z = (to + from) / 2;  //umela nula
+
+        for(int y = from; y < to; y++)
+            for(int x = diameter/4; x >= 0; x--)  //D/4 je omezeni na maximalni moznou delku kratsi poloosy elipsy
+                if(out.at<uchar>(Point(x, y))){
+
+                    locations.push_back(Point(x, y));  //umela nula na stredu
+                    break;
+                }
+
+                            for(unsigned i=0; i<locations.size(); i++){
+
+                                Point p(locations[i].x, locations[i].y);
+                                cv::line(out, p, p, Scalar(192, 64, 64), 3, 8);
+                            }
+
+        Mat trans = Mat::zeros(out.size(), CV_8UC1);
+        vector<Point> locations_t;
+        for(unsigned i=0; i<locations.size(); i++){  //little magic - transform eliptic(quadratic) eq to linear
+                                                    //with knowledge of bigger radius (height) we get
+
+            float y_t = locations[i].y - Z; //now in range <-A, A>
+            y_t = A * sqrt(1 - pow(y_t/A, 2)); //<0, A>
+            Point p(locations[i].x, y_t);
+            locations_t.push_back(p);
+
+#ifdef QT_DEBUG
+            cv::line(trans, p, p, Scalar(255, 255, 255), 2, 8);
+#endif //QT_DEBUG
+        }
+
+        if(locations_t.size()){
+
+            cv::fitLine(locations_t, line, CV_DIST_L2, 0, 0.01, 0.01);
+            vector<Vec2f> lines;
+            // detect lines
+            cv::HoughLines(trans, lines, 1, CV_PI/180, 150, 0, 0 );
+
+            // draw lines
+            for( size_t i = 0; i < lines.size(); i++ )
+            {
+                float rho = lines[i][0], theta = lines[i][1];
+                Point pt1, pt2;
+                double a = cos(theta), b = sin(theta);
+                double x0 = a*rho, y0 = b*rho;
+                pt1.x = cvRound(x0 + 1000*(-b));
+                pt1.y = cvRound(y0 + 1000*(a));
+                pt2.x = cvRound(x0 - 1000*(-b));
+                pt2.y = cvRound(y0 - 1000*(a));
+                cv::line(trans, pt1, pt2, Scalar(0,0,255), 1, CV_AA);
+            }
+        }
 
         qDebug() << "line" <<
                     "vx" << QString::number(line[0]) <<
@@ -186,11 +271,12 @@ public slots:
         ///leva
         tmp = out.t(); cv::flip(tmp, out, 0); //*src;  //original
         //Vec4f line3 = eliptic_approx(line1[2], line1[2] + width); //zjednoduseno - kraj definujem jen strednim prumerem
-        Vec4f line3 = eliptic_approx(left_s1, out.rows - left_s2);
-        double laxis = fabs((line3[3] / (line3[1] + 1e-6) * line3[0]));
+        Vec4f line3 = eliptic_approx_hough(left_s1, out.rows - left_s2);
+        double laxis = fabs(line3[3] / (line3[1] + 1e-6) * line3[0]);
         double ldia = out.rows - left_s2 - left_s1;
+        double loffs = line3[2] - ((line3[3] - ldia/2) / (line3[1] + 1e-6) * line3[0]);
         qDebug() << "laxis" << QString::number(laxis);
-        left_corr = line3[2] + laxis;  //shift calc - ie. transform from parametric to y=f(x) eq.
+        left_corr = loffs + laxis;  //shift calc - ie. transform from parametric to y=f(x) eq.
         qDebug() << "Correction-Left:" << QString::number(left_corr);
 
                 cv::ellipse(out, Point(left_corr, line1[2] + diameter/2), Size(abs(laxis), abs(ldia/2)),
@@ -202,11 +288,12 @@ public slots:
 
         ///prava
         tmp = out; cv::flip(tmp, out, 1);
-        Vec4f line4 = eliptic_approx(right_s1, out.rows - right_s2);
+        Vec4f line4 = eliptic_approx_hough(right_s1, out.rows - right_s2);
         double rdia = out.rows - right_s2 - right_s1;
         double raxis = fabs((line4[3] / (line4[1] + 1e-6) * line4[0]));
+        double roffs = line4[2] - ((line4[3] - ldia/2) / (line4[1] + 1e-6) * line4[0]);
         qDebug() << "raxis" << QString::number(raxis);
-        right_corr = line4[2] + raxis;
+        right_corr = roffs + raxis;
         qDebug() << "Correction-Right:" << QString::number(right_corr);
 
                 cv::ellipse(out, Point(right_corr, line1[2] + diameter/2), Size(abs(raxis), abs(rdia/2)),
