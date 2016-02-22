@@ -20,7 +20,8 @@ enum e_vi_plc_pc_ords {
     VI_PLC_PC_ERROR = (5 << 8), //see e_vi_plc_pc_errors
     VI_PLC_PC_READY = (6 << 8),
     VI_PLC_PC_CALIBRATE = (7 << 8),
-    VI_PLC_PC_CALIBRATE_ACK = (8 << 8)
+    VI_PLC_PC_CALIBRATE_ACK = (8 << 8),
+    VI_PLC_PC_BACKGROUND = (9 << 8)
 };
 
 

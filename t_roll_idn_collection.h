@@ -71,6 +71,14 @@ private:
         return false;
     }
 
+    uint32_t __to_rev_endian(uint32_t word){
+
+        return ((word >> 24) & 0xFF) << 0 |
+               ((word >> 16) & 0xFF) << 8 |
+               ((word >> 8) & 0xFF) << 16 |
+               ((word >> 0) & 0xFF) << 24;
+    }
+
 public slots:
 
     int on_done(int res, void *img){
@@ -86,18 +94,8 @@ public slots:
         t_comm_binary_rollidn ord_st;
         memcpy(&ord_st, raw.data(), sizeof(t_comm_binary_rollidn));
 
-        uint32_t b_width = ((ord_st.width >> 24) & 0xFF) << 0 |
-                ((ord_st.width >> 16) & 0xFF) << 8 |
-                ((ord_st.width >> 8) & 0xFF) << 16 |
-                ((ord_st.width >> 0) & 0xFF) << 24;
-
-        uint32_t b_heigth = ((ord_st.height >> 24) & 0xFF) << 0 |
-                ((ord_st.height >> 16) & 0xFF) << 8 |
-                ((ord_st.height >> 8) & 0xFF) << 16 |
-                ((ord_st.height >> 0) & 0xFF) << 24;
-
-        ord_st.height = b_heigth;
-        ord_st.width = b_width;
+        ord_st.height = __to_rev_endian(ord_st.width);
+        ord_st.width = __to_rev_endian(ord_st.height);
 
         log.clear();
         log += QString("rx: ord(%1),flags(0x%2),width(%3),height(%4)\r\n")
@@ -146,22 +144,12 @@ public slots:
                 ms.diameter *= ratio_d;
                 ms.length *= ratio_l;
 
-                uint32_t b_dia, s_dia = ms.diameter * 10;
-                //qToBigEndian(ms.width*10, (uchar *)&i_width);
-                uint32_t b_len, s_len = ms.length * 10;
-                //qToBigEndian(ms.height*10, (uchar *)&i_heigth);
+                uint32_t s_dia = ms.diameter * 10;
+                uint32_t s_len = ms.length * 10;
 
-                b_len = ((s_len >> 24) & 0xFF) << 0 |
-                        ((s_len >> 16) & 0xFF) << 8 |
-                        ((s_len >> 8) & 0xFF) << 16 |
-                        ((s_len >> 0) & 0xFF) << 24;
-
-                b_dia = ((s_dia >> 24) & 0xFF) << 0 |
-                        ((s_dia >> 16) & 0xFF) << 8 |
-                        ((s_dia >> 8) & 0xFF) << 16 |
-                        ((s_dia >> 0) & 0xFF) << 24;
-
-                t_comm_binary_rollidn reply_st2 = {(uint16_t)VI_PLC_PC_RESULT, error_mask, b_len, b_dia};
+                t_comm_binary_rollidn reply_st2 = {(uint16_t)VI_PLC_PC_RESULT, error_mask,
+                                                   __to_rev_endian(s_len),
+                                                   __to_rev_endian(s_dia)};
                 QByteArray reply_by2((const char *)&reply_st2, sizeof(t_comm_binary_rollidn));
                 iface.on_write(reply_by2);
 
@@ -177,6 +165,7 @@ public slots:
                 log += QString("rx: ABORT\r\n");
                 on_abort(); //nastavi preruseni a ceka na jeho vyhodnoceni
                 //a prekontrolujem jak na tom sme
+            break;
             case VI_PLC_PC_READY:
             {
                 log += QString("rx: READY\r\n");
@@ -194,6 +183,18 @@ public slots:
                     iface.on_write(reply_by);
                 }
             }
+            break;
+            case VI_PLC_PC_BACKGROUND:
+                //if(cam_device == basler) /*! \todo */
+                if(cam_device.exposure(-100)){ //100us tolerance to settling exposure
+
+                    on_trigger(true); //true == background mode
+                    if(error_mask == VI_ERR_OK){
+
+
+                    }
+                }
+
             break;
             case VI_PLC_PC_CALIBRATE:
             {
@@ -256,7 +257,7 @@ public slots:
 
     //odpaleni snimani analyza a odreportovani vysledku
     //volame zatim rucne
-    int on_trigger(){
+    int on_trigger(bool background = false){
 
         uint8_t *img = (uint8_t *) new uint8_t[4 * 4000 * 3000];
         i_vi_camera_base::t_campic_info info;
@@ -285,7 +286,9 @@ public slots:
         store.insert(snapshot);
 
         cv::Mat src(info.h, info.w, CV_8UC4, img);
-        bc.proc(0, &src);
+
+        //process measurement or save new background
+        bc.proc((background) ? 1 : 0, &src);
 
         delete[] img;
         return 1;
@@ -308,7 +311,8 @@ public slots:
 
     int on_calibration(){
 
-        return on_trigger();
+        /*! \todo chessboard full calibration */
+        //return on_trigger();
     }
 
 public:

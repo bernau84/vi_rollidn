@@ -29,7 +29,7 @@ public:
     t_vi_proc_threshold(QString &path =  QString(":/js_config_threshold_cont.txt")):
         i_proc_stage(path)
     {
-        thresh = 75;    /*! \todo - from collection */
+        thresh = 90;    /*! \todo - from collection */
         max_thresh = 255;
         min_contour_area = 100;
 

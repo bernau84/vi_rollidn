@@ -37,11 +37,18 @@ public:
 public slots:
     int proc(int p1, void *p2){
 
-        p1 = p1;
         Mat tsrc = *(Mat *)p2;
+        //const char *std_bpath = bpath.toLatin1().data();
+        //const char *std_bpath = "c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\back.bmp";
+        //const char *std_bpath = "c:\\Users\\bernau84\\Pictures\\trima_daybackground\\trn_bck_exp1_1.bmp";
 
-        //Mat tbck = imread(bpath.toLatin1().data());
-        Mat tbck = imread("c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\back.bmp");
+        if(p1 == 1){
+
+            imwrite(bck_path, tsrc);
+            return 1;
+        }
+
+        Mat tbck = imread(std_bpath);
         if(tbck.empty()){
 
             emit next(1, &tsrc);

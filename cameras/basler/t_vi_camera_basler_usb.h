@@ -65,6 +65,8 @@ public:
             return -2;
         }
 
+        camera.Open();
+
         QString mode = par["General"].get().toString();
         if(mode.compare("MANUAL")){
 
@@ -80,6 +82,60 @@ public:
         return 0;
     }
 
+    //time_us > 0 - set fix vale
+    //0 - continuous
+    //< 0 - once (wait for settling exposition constant to with +/- time_us tolerance)
+    //returns actual exposition
+    int exposure(int time_us){
+
+        if(time_us > 0){
+
+            /*! fixed exposition time */
+            /*! \todo use setup property */
+            camera.ExposureTime.SetValue(time_us);
+        } else if(time_us == 0){
+
+            camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
+        } else {
+
+            camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
+
+            // When the "once" mode of operation is selected,
+            // the parameter values are automatically adjusted until the related image property
+            // reaches the target value. After the automatic parameter value adjustment is complete, the auto
+            // function will automatically be set to "off", and the new parameter value will be applied to the
+            // subsequently grabbed images.
+            int n = 0, prev_exp = 2*time_us, exp = 0;
+            while (abs(exp - prev_exp) > abs(time_us))
+            {
+                CBaslerUsbInstantCamera::GrabResultPtr_t ptrGrabResultA;
+                camera.GrabOne( 5000, ptrGrabResultA);
+                Pylon::DisplayImage(1, ptrGrabResultA);
+                ++n;
+
+                prev_exp = exp;
+                exp = camera.ExposureTime.GetValue();
+
+                //For demonstration purposes only. Wait until the image is shown.
+                ::Sleep(100);
+
+                qDebug() << "ExposureAuto " << n << " frames.";
+                qDebug() << "Final exposure time = ";
+                qDebug() << exp << " us";
+
+                //Make sure the loop is exited.
+                if (n > 100)
+                {
+                    throw RUNTIME_EXCEPTION( "The adjustment of auto exposure did not finish.");
+                }
+            }
+
+            camera.ExposureAuto.SetValue(ExposureAuto_Off);
+        }
+
+        return camera.ExposureTime.GetValue();
+    }
+
     int snap(void *img, unsigned free, t_campic_info *info = NULL){
 
         if(sta != CAMSTA_PREPARED)
@@ -88,15 +144,13 @@ public:
         try
         {
 
-            //Loading user set 1 settings
+            //Loading user set 1 settings - already dony in BaslerViewer
             //camera.UserSetSelector.SetValue(UserSetSelector_UserSet1);
             //camera.UserSetLoad.Execute();
 
-            camera.StartGrabbing(1);
-
             // This smart pointer will receive the grab result data.
             CGrabResultPtr ptrGrabResult;
-
+            camera.StartGrabbing(1);
             while ( camera.IsGrabbing())
             {
                 // Wait for an image and then retrieve it. A timeout of 5000 ms is used.

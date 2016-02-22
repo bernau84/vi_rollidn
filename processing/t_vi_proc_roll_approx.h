@@ -157,22 +157,22 @@ private:
         if(locations_t.size()){
 
             cv::fitLine(locations_t, line, CV_DIST_L2, 0, 0.01, 0.01);
-            vector<Vec2f> lines;
-            // detect lines
-            cv::HoughLines(trans, lines, 1, CV_PI/180, 150, 0, 0 );
 
-            // draw lines
+            vector<Vec4i> lines;
+            HoughLinesP(trans, lines, 1, CV_PI/180, 50, 0, 0 );
             for( size_t i = 0; i < lines.size(); i++ )
             {
-                float rho = lines[i][0], theta = lines[i][1];
-                Point pt1, pt2;
-                double a = cos(theta), b = sin(theta);
-                double x0 = a*rho, y0 = b*rho;
-                pt1.x = cvRound(x0 + 1000*(-b));
-                pt1.y = cvRound(y0 + 1000*(a));
-                pt2.x = cvRound(x0 - 1000*(-b));
-                pt2.y = cvRound(y0 - 1000*(a));
-                cv::line(trans, pt1, pt2, Scalar(0,0,255), 1, CV_AA);
+              Vec4i l = lines[i];
+              cv::line(trans, Point(l[0] + (i+1)*50, l[1]), Point(l[2] + (i+1)*50, l[3]), Scalar(255,255,255), 1, CV_AA);
+            }
+
+            if(lines.size()){
+
+                double x0 = lines[0][0], y0 = lines[0][1];
+                line[0] = lines[0][2] - lines[0][0];
+                line[1] = lines[0][3] - lines[0][1];
+                line[2] = x0;
+                line[3] = y0;
             }
         }
 
@@ -183,17 +183,17 @@ private:
                     "y0" << QString::number(line[3]);
 
 #ifdef QT_DEBUG
-                cv::line(trans,
-                         Point(line[2]-line[0]*200, line[3]-line[1]*200),
-                         Point(line[2]+line[0]*200, line[3]+line[1]*200),
-                         Scalar(128, 128 ,128),
-                         3, CV_AA);
+//                cv::line(trans,
+//                         Point(line[2]-line[0]*200, line[3]-line[1]*200),
+//                         Point(line[2]+line[0]*200, line[3]+line[1]*200),
+//                         Scalar(128, 128 ,128),
+//                         3, CV_AA);
 
-                cv::line(trans,
-                         Point(line[2], from),
-                         Point(line[2], to),
-                         Scalar(64, 64 ,64),
-                         1, CV_AA);
+//                cv::line(trans,
+//                         Point(line[2], from),
+//                         Point(line[2], to),
+//                         Scalar(64, 64 ,64),
+//                         1, CV_AA);
 
                 imshow("Trans", trans);
 #endif //QT_DEBUG
@@ -272,9 +272,10 @@ public slots:
         tmp = out.t(); cv::flip(tmp, out, 0); //*src;  //original
         //Vec4f line3 = eliptic_approx(line1[2], line1[2] + width); //zjednoduseno - kraj definujem jen strednim prumerem
         Vec4f line3 = eliptic_approx_hough(left_s1, out.rows - left_s2);
-        double laxis = fabs(line3[3] / (line3[1] + 1e-6) * line3[0]);
-        double ldia = out.rows - left_s2 - left_s1;
-        double loffs = line3[2] - ((line3[3] - ldia/2) / (line3[1] + 1e-6) * line3[0]);
+        //Vec4f line3 = eliptic_approx(left_s1, out.rows - left_s2);
+        double laxis = fabs(line3[3] / (line3[1] + 1e-6) * line3[0]);  //druha poloosa elipsy
+        double ldia = out.rows - left_s2 - left_s1;  //prvni poloosa
+        double loffs = line3[2] - ((line3[3] - ldia/2) / (line3[1] + 1e-6) * line3[0]);  //posun v xove ose
         qDebug() << "laxis" << QString::number(laxis);
         left_corr = loffs + laxis;  //shift calc - ie. transform from parametric to y=f(x) eq.
         qDebug() << "Correction-Left:" << QString::number(left_corr);
@@ -289,6 +290,7 @@ public slots:
         ///prava
         tmp = out; cv::flip(tmp, out, 1);
         Vec4f line4 = eliptic_approx_hough(right_s1, out.rows - right_s2);
+        //Vec4f line4 = eliptic_approx(right_s1, out.rows - right_s2);
         double rdia = out.rows - right_s2 - right_s1;
         double raxis = fabs((line4[3] / (line4[1] + 1e-6) * line4[0]));
         double roffs = line4[2] - ((line4[3] - ldia/2) / (line4[1] + 1e-6) * line4[0]);
