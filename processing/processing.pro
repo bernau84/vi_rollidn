@@ -21,7 +21,8 @@ HEADERS  += \
     t_vi_proc_threshold_cont.h \
     t_vi_proc_roll_approx.h \
     t_vi_proc_roi_edgemax.h \
-    t_vi_proc_sub_background.h
+    t_vi_proc_sub_background.h \
+    t_vi_proc_rectify.h
 
 INCLUDEPATH += "C:\\opencv\\build\\include"
 

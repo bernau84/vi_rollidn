@@ -1,0 +1,5 @@
+#ifndef T_VI_PROC_RECTIFY
+#define T_VI_PROC_RECTIFY
+
+#endif // T_VI_PROC_RECTIFY
+

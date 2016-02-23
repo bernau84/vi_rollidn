@@ -14,10 +14,20 @@ class t_vi_proc_roll_approx : public i_proc_stage
 {
 
 public:
-    float length;  //output result
-    float diameter;
-    float left_corr;
-    float right_corr;
+    //output result
+    float length;       //delka po aproximaci cel
+    float diameter;     //vyska/prumer valce po linearni aprox minimalnimi ctverci
+
+    float left_corr;    //leva korekce roi
+    float right_corr;   //prava korekce roi
+    float left_radius;   //leva delka poloosy cela elipsy
+    float right_raduis;  //prava delka poloosy cela elipsu
+
+    float left_l_err;  //chyba mereni stredu leve strany
+    float right_l_err;
+
+    float left_r_err;   //chyba mereni polomeru elipsy leve casti
+    float right_r_err;
 
 private:
 
