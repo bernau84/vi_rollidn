@@ -15,25 +15,22 @@ class t_vi_proc_roll_approx : public i_proc_stage
 
 public:
     //output result
-    float length;       //delka po aproximaci cel
-    float diameter;     //vyska/prumer valce po linearni aprox minimalnimi ctverci
+    typedef struct {
+        float length;       //delka
+        float diameter;     //vyska/prumer valce
+        float left_corr;    //leva korekce roi
+        float right_corr;   //prava korekce roi
+        float left_err;  //chyba mereni stredu leve strany
+        float right_err;    //chyba mereni stredu prave strany
+    } t_vi_proc_roll_ind_res;
 
-    float left_corr;    //leva korekce roi
-    float right_corr;   //prava korekce roi
-    float left_radius;   //leva delka poloosy cela elipsy
-    float right_raduis;  //prava delka poloosy cela elipsu
-
-    float left_l_err;  //chyba mereni stredu leve strany
-    float right_l_err;
-
-    float left_r_err;   //chyba mereni polomeru elipsy leve casti
-    float right_r_err;
-
+    t_vi_proc_roll_ind_res midprof;   //mereni nejdelsi stredni cary
+    t_vi_proc_roll_ind_res eliptic;   //mereni stredu aproximovanych eliptickych cel
 private:
 
     Mat out;
 
-    Vec4f linear_approx(int from, int to){
+    Vec4f linear_approx(int from, int to, float *err = NULL){
 
         vector<Point> locations; Vec4f line;   // output, locations of non-zero pixels; vx, vy, x0, y0
 
@@ -61,10 +58,27 @@ private:
                     "x0" << QString::number(line[2]) <<
                     "y0" << QString::number(line[3]);
 
+        if(err){
+
+            float a = line[3];
+            float b = line[2];
+            float c = line[0]*line[3] - line[1]*line[2]; //algebraicky tvar primky
+            float d = sqrt(a*a + b*b);
+            float cumsum = 0;
+
+            for(unsigned i=0; i<locations.size(); i++){
+
+                float dist = fabs(a*locations[i].x + b*locations[i].y + c) / d;
+                cumsum += dist;
+            }
+
+            *err = sumsum / locations.size();
+        }
+
         return line;
     }
 
-    Vec4f eliptic_approx(int from, int to){
+    Vec4f eliptic_approx(int from, int to, float *err = NULL){
 
         vector<Point> locations; Vec4f line;   // output, locations of non-zero pixels; vx, vy, x0, y0
 
@@ -100,7 +114,7 @@ private:
         }
 
         if(locations_t.size())
-            cv::fitLine(locations_t, line, CV_DIST_L2, 0, 0.01, 0.01);
+            cv::fitLine(locations_t, line, CV_DIST_L1, 0, 0.01, 0.01);
 
         qDebug() << "line" <<
                     "vx" << QString::number(line[0]) <<
@@ -124,11 +138,27 @@ private:
                 imshow("Trans", trans);
 #endif //QT_DEBUG
 
+        if(err){
+
+            float a = line[3];
+            float b = line[2];
+            float c = line[0]*line[3] - line[1]*line[2]; //algebraicky tvar primky
+            float d = sqrt(a*a + b*b);
+            float cumsum = 0;
+
+            for(unsigned i=0; i<locations.size(); i++){
+
+                float dist = fabs(a*locations[i].x + b*locations[i].y + c) / d;
+                cumsum += dist;
+            }
+
+            *err = sumsum / locations.size();
+        }
         return line;
     }
 
 
-    Vec4f eliptic_approx_hough(int from, int to){
+    Vec4f eliptic_approx_hough(int from, int to, float *err = NULL){
 
         vector<Point> locations; Vec4f line;   // output, locations of non-zero pixels; vx, vy, x0, y0
 
@@ -260,7 +290,7 @@ public slots:
                 cv::imshow("Cylinder diameter", out.t());
 #endif // QT_DEBUG
 
-        diameter = out.cols - line2[2] - line1[2];
+        eliptic.diameter = midprof.diameter = out.cols - line2[2] - line1[2];
         qDebug() << "Me-Diameter:" << QString::number(diameter);
 
         //najdem pruseciky horni a spodni aproximace s levym a pravym celem
@@ -280,27 +310,44 @@ public slots:
 
         ///leva
         tmp = out.t(); cv::flip(tmp, out, 0); //*src;  //original
-        //Vec4f line3 = eliptic_approx(line1[2], line1[2] + width); //zjednoduseno - kraj definujem jen strednim prumerem
-        Vec4f line3 = eliptic_approx_hough(left_s1, out.rows - left_s2);
-        //Vec4f line3 = eliptic_approx(left_s1, out.rows - left_s2);
+
+        //apriximace cela elipsou
+        //Vec4f line3 = eliptic_approx_hough(left_s1, out.rows - left_s2);
+        Vec4f line3 = eliptic_approx(left_s1, out.rows - left_s2);
+
         double laxis = fabs(line3[3] / (line3[1] + 1e-6) * line3[0]);  //druha poloosa elipsy
         double ldia = out.rows - left_s2 - left_s1;  //prvni poloosa
         double loffs = line3[2] - ((line3[3] - ldia/2) / (line3[1] + 1e-6) * line3[0]);  //posun v xove ose
         qDebug() << "laxis" << QString::number(laxis);
-        left_corr = loffs + laxis;  //shift calc - ie. transform from parametric to y=f(x) eq.
+        eliptic.left_corr = loffs + laxis;  //shift calc - ie. transform from parametric to y=f(x) eq.
         qDebug() << "Correction-Left:" << QString::number(left_corr);
 
-                cv::ellipse(out, Point(left_corr, line1[2] + diameter/2), Size(abs(laxis), abs(ldia/2)),
+                cv::ellipse(out, Point(eliptic.left_corr, line1[2] + eliptic.diameter/2), Size(abs(laxis), abs(ldia/2)),
                         0.0, 0.0, 360, Scalar(128, 128 ,128), 2, 4);
 #ifdef xQT_DEBUG
                 cv::namedWindow("Left elipse", CV_WINDOW_AUTOSIZE);
                 cv::imshow("Left elipse", out);
 #endif //QT_DEBUG
 
+        //zmereni leveho stredu (nejdelsiho lineprofilu)
+        float ylmid = (left_s1 + left_s2) / 2;
+        Vec4f line3_mid = linear_approx(ylmid - midprof.diameter/5, ylmid + midprof.diameter/5, &midprof.left_err);
+
+        cv::line(out,
+                 Point(line3_mid[2]-line3_mid[0]*100, line3_mid[3]-line3_mid[1]*100),
+                 Point(line3_mid[2]+line3_mid[0]*100, line3_mid[3]+line3_mid[1]*100),
+                 Scalar(128, 128 ,128),
+                 2, CV_AA);
+
+        midprof.left_corr = line3_mid[2] + (line3_mid[0]/(line3_mid[1] + 1e-6))*(ylmid - line3_mid[3]);
+
         ///prava
         tmp = out; cv::flip(tmp, out, 1);
-        Vec4f line4 = eliptic_approx_hough(right_s1, out.rows - right_s2);
-        //Vec4f line4 = eliptic_approx(right_s1, out.rows - right_s2);
+
+        //Vec4f line4 = eliptic_approx_hough(right_s1, out.rows - right_s2);
+        Vec4f line4 = eliptic_approx(right_s1, out.rows - right_s2);
+
+
         double rdia = out.rows - right_s2 - right_s1;
         double raxis = fabs((line4[3] / (line4[1] + 1e-6) * line4[0]));
         double roffs = line4[2] - ((line4[3] - ldia/2) / (line4[1] + 1e-6) * line4[0]);
@@ -313,8 +360,23 @@ public slots:
                 cv::namedWindow("Cylinder bases", CV_WINDOW_AUTOSIZE);
                 cv::imshow("Cylinder bases", out);
 
-        length = out.cols - left_corr - right_corr;
-        qDebug() << "Height:" << QString::number(length);
+        //zmereni praveho stredu (nejdelsiho lineprofilu)
+        float yrmid = (right_s1 + right_s2) / 2;
+        Vec4f line4_mid = linear_approx(yrmid - midprof.diameter/5, yrmid + midprof.diameter/5, &midprof.right_err);
+
+        cv::line(out,
+                 Point(line4_mid[2]-line4_mid[0]*100, line4_mid[3]-line4_mid[1]*100),
+                 Point(line4_mid[2]+line4_mid[0]*100, line4_mid[3]+line4_mid[1]*100),
+                 Scalar(128, 128 ,128),
+                 2, CV_AA);
+
+        midprof.right_corr = line4_mid[2] + (line4_mid[0]/(line4_mid[1] + 1e-6))*(yrmid - line4_mid[3]);
+
+        midprof.length = out.cols - midprof.right_corr - midprof.left_corr;
+        qDebug() << "Mid profile Length:" << QString::number(midprof.length );
+
+        eliptic.length = out.cols - eliptic.left_corr - eliptic.right_corr;
+        qDebug() << "Eliptic Length:" << QString::number(eliptic.length);
 
         emit next(1, src);
         return 1;
