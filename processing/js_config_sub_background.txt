@@ -3,9 +3,15 @@
                 "__info": "background bmp file path",
                 "__def": "back.bmp",
         },
-        "sub-threshold": {
-                "__info": "threshold binary value",
-                "__def": 20,
+        "bck-ligher-threshold": {
+                "__info": "background pixel lighter than this is zeroed",
+                "__def": 32,
+                "__min": 1,
+                "__max": 255
+        }
+        "bck-darker-threshold": {
+                "__info": "background picture lighter than this is unchanged",
+                "__def": 16,
                 "__min": 1,
                 "__max": 255
         }

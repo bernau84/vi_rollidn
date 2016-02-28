@@ -29,6 +29,7 @@ public:
 private:
 
     Mat out;
+    Mat loc;  //pro vizualizaci na cmarani
 
     Vec4f linear_approx(int from, int to, float *err = NULL){
 
@@ -42,15 +43,16 @@ private:
                     break;
                 }
 
-
+#ifdef QT_DEBUG
                         for(unsigned i=0; i<locations.size(); i++){
 
                             Point p(locations[i].x, locations[i].y);
-                            cv::line(out, p, p, Scalar(64, 64, 64), 3, 8);
+                            cv::line(loc, p, p, Scalar(64, 64, 64), 3, 8);
                         }
+#endif //xQT_DEBUG
 
         if(locations.size())
-            cv::fitLine(locations, line, CV_DIST_L2, 0, 0.01, 0.01);
+            cv::fitLine(locations, line, CV_DIST_L1, 0, 0.01, 0.01);
 
         qDebug() << "line" <<
                     "vx" << QString::number(line[0]) <<
@@ -72,7 +74,7 @@ private:
                 cumsum += dist;
             }
 
-            *err = sumsum / locations.size();
+            *err = cumsum / locations.size();
         }
 
         return line;
@@ -85,18 +87,19 @@ private:
         int lheight = to - from;
 
         for(int y = from; y < to; y++)
-            for(int x = diameter/4; x >= 0; x--)  //D/4 je omezeni na maximalni moznou delku kratsi poloosy elipsy
+            for(int x = eliptic.diameter/4; x >= 0; x--)  //D/4 je omezeni na maximalni moznou delku kratsi poloosy elipsy
                 if(out.at<uchar>(Point(x, y))){
 
                     locations.push_back(Point(x, y - from));  //from 0 to lheight
                     break;
                 }
-
+#ifdef xQT_DEBUG
                             for(unsigned i=0; i<locations.size(); i++){
 
                                 Point p(locations[i].x, locations[i].y + from);
-                                cv::line(out, p, p, Scalar(192, 64, 64), 3, 8);
+                                cv::line(loc, p, p, Scalar(192, 64, 64), 3, 8);
                             }
+#endif //QT_DEBUG
 
         Mat trans = Mat::zeros(out.size(), CV_8UC1);
         vector<Point> locations_t;
@@ -108,7 +111,7 @@ private:
             Point p(locations[i].x, y_t);  //in picture coords <0, lheight>
             locations_t.push_back(p);
 
-#ifdef QT_DEBUG
+#ifdef xQT_DEBUG
             cv::line(trans, p, p, Scalar(255, 255, 255), 2, 8);
 #endif //QT_DEBUG
         }
@@ -122,7 +125,7 @@ private:
                     "x0" << QString::number(line[2]) <<
                     "y0" << QString::number(line[3]);
 
-#ifdef QT_DEBUG
+#ifdef xQT_DEBUG
                 cv::line(trans,
                          Point(line[2]-line[0]*200, line[3]-line[1]*200),
                          Point(line[2]+line[0]*200, line[3]+line[1]*200),
@@ -152,7 +155,7 @@ private:
                 cumsum += dist;
             }
 
-            *err = sumsum / locations.size();
+            *err = cumsum / locations.size();
         }
         return line;
     }
@@ -161,23 +164,26 @@ private:
     Vec4f eliptic_approx_hough(int from, int to, float *err = NULL){
 
         vector<Point> locations; Vec4f line;   // output, locations of non-zero pixels; vx, vy, x0, y0
+        err = err;
 
         int A = (to - from) / 2;  //hlavni poloosa
         int Z = (to + from) / 2;  //umela nula
 
         for(int y = from; y < to; y++)
-            for(int x = diameter/4; x >= 0; x--)  //D/4 je omezeni na maximalni moznou delku kratsi poloosy elipsy
+            for(int x = eliptic.diameter/4; x >= 0; x--)  //D/4 je omezeni na maximalni moznou delku kratsi poloosy elipsy
                 if(out.at<uchar>(Point(x, y))){
 
                     locations.push_back(Point(x, y));  //umela nula na stredu
                     break;
                 }
 
+#ifdef xQT_DEBUG
                             for(unsigned i=0; i<locations.size(); i++){
 
                                 Point p(locations[i].x, locations[i].y);
-                                cv::line(out, p, p, Scalar(192, 64, 64), 3, 8);
+                                cv::line(loc, p, p, Scalar(192, 64, 64), 3, 8);
                             }
+#endif //QT_DEBUG
 
         Mat trans = Mat::zeros(out.size(), CV_8UC1);
         vector<Point> locations_t;
@@ -189,9 +195,7 @@ private:
             Point p(locations[i].x, y_t);
             locations_t.push_back(p);
 
-#ifdef QT_DEBUG
             cv::line(trans, p, p, Scalar(255, 255, 255), 2, 8);
-#endif //QT_DEBUG
         }
 
         if(locations_t.size()){
@@ -200,6 +204,7 @@ private:
 
             vector<Vec4i> lines;
             HoughLinesP(trans, lines, 1, CV_PI/180, 50, 0, 0 );
+
             for( size_t i = 0; i < lines.size(); i++ )
             {
               Vec4i l = lines[i];
@@ -222,18 +227,18 @@ private:
                     "x0" << QString::number(line[2]) <<
                     "y0" << QString::number(line[3]);
 
-#ifdef QT_DEBUG
-//                cv::line(trans,
-//                         Point(line[2]-line[0]*200, line[3]-line[1]*200),
-//                         Point(line[2]+line[0]*200, line[3]+line[1]*200),
-//                         Scalar(128, 128 ,128),
-//                         3, CV_AA);
+#ifdef xQT_DEBUG
+                cv::line(trans,
+                         Point(line[2]-line[0]*200, line[3]-line[1]*200),
+                         Point(line[2]+line[0]*200, line[3]+line[1]*200),
+                         Scalar(128, 128 ,128),
+                         3, CV_AA);
 
-//                cv::line(trans,
-//                         Point(line[2], from),
-//                         Point(line[2], to),
-//                         Scalar(64, 64 ,64),
-//                         1, CV_AA);
+                cv::line(trans,
+                         Point(line[2], from),
+                         Point(line[2], to),
+                         Scalar(64, 64 ,64),
+                         1, CV_AA);
 
                 imshow("Trans", trans);
 #endif //QT_DEBUG
@@ -255,43 +260,37 @@ public:
 public slots:
     int proc(int p1, void *p2){
 
-        length = diameter = 0.0;
-        left_corr = right_corr = 0.0;
+        memset(&eliptic, 0, sizeof(t_vi_proc_roll_ind_res));
+        memset(&midprof, 0, sizeof(t_vi_proc_roll_ind_res));
 
         p1 = p1;
-        Mat *src = (Mat *)p2;
+        cv::Mat *src = (Mat *)p2;
+        cv::Mat tmp;
 
         ///horni strana
         cv::transpose(*src, out);
+        cv::transpose(*src, loc);
         Vec4f line1 = linear_approx(out.cols/3, out.rows - out.cols/3);
 
-                cv::line(out,
+                cv::line(loc,
                          Point(line1[2]-line1[0]*100, line1[3]-line1[1]*100),
                          Point(line1[2]+line1[0]*100, line1[3]+line1[1]*100),
                          Scalar(128, 128 ,128),
                          2, CV_AA);
 
-#ifdef xQT_DEBUG
-                cv::namedWindow("Transposed", CV_WINDOW_AUTOSIZE);
-                cv::imshow("Transposed", out);
-#endif // QT_DEBUG
-
         ///spodni strana
-        cv::Mat tmp = out; cv::flip(tmp, out, 1);
+        tmp = out; cv::flip(tmp, out, 1);
+        tmp = loc; cv::flip(tmp, loc, 1);
         Vec4f line2 = linear_approx(out.cols/3, out.rows - out.cols/3);
 
-                cv::line(out,
+                cv::line(loc,
                          Point(line2[2]-line2[0]*100, line2[3]-line2[1]*100),
                          Point(line2[2]+line2[0]*100, line2[3]+line2[1]*100),
                          Scalar(128, 128 ,128),
                          2, CV_AA);
-#ifdef xQT_DEBUG
-                cv::namedWindow("Cylinder diameter", CV_WINDOW_AUTOSIZE);
-                cv::imshow("Cylinder diameter", out.t());
-#endif // QT_DEBUG
 
         eliptic.diameter = midprof.diameter = out.cols - line2[2] - line1[2];
-        qDebug() << "Me-Diameter:" << QString::number(diameter);
+        qDebug() << "Me-Diameter:" << QString::number(midprof.diameter);
 
         //najdem pruseciky horni a spodni aproximace s levym a pravym celem
         //to definuje mez pro hledani elipticke aproximace cela
@@ -310,6 +309,7 @@ public slots:
 
         ///leva
         tmp = out.t(); cv::flip(tmp, out, 0); //*src;  //original
+        tmp = loc.t(); cv::flip(tmp, loc, 0); //*src;  //original
 
         //apriximace cela elipsou
         //Vec4f line3 = eliptic_approx_hough(left_s1, out.rows - left_s2);
@@ -320,63 +320,65 @@ public slots:
         double loffs = line3[2] - ((line3[3] - ldia/2) / (line3[1] + 1e-6) * line3[0]);  //posun v xove ose
         qDebug() << "laxis" << QString::number(laxis);
         eliptic.left_corr = loffs + laxis;  //shift calc - ie. transform from parametric to y=f(x) eq.
-        qDebug() << "Correction-Left:" << QString::number(left_corr);
+        qDebug() << "Correction-Left-eliptic:" << QString::number(eliptic.left_corr);
 
-                cv::ellipse(out, Point(eliptic.left_corr, line1[2] + eliptic.diameter/2), Size(abs(laxis), abs(ldia/2)),
+                cv::ellipse(loc, Point(eliptic.left_corr, line1[2] + eliptic.diameter/2), Size(abs(laxis), abs(ldia/2)),
                         0.0, 0.0, 360, Scalar(128, 128 ,128), 2, 4);
-#ifdef xQT_DEBUG
-                cv::namedWindow("Left elipse", CV_WINDOW_AUTOSIZE);
-                cv::imshow("Left elipse", out);
-#endif //QT_DEBUG
 
         //zmereni leveho stredu (nejdelsiho lineprofilu)
-        float ylmid = (left_s1 + left_s2) / 2;
-        Vec4f line3_mid = linear_approx(ylmid - midprof.diameter/5, ylmid + midprof.diameter/5, &midprof.left_err);
+        float ylmid = (left_s1 + out.rows - left_s2) / 2;
+        Vec4f line3_mid = linear_approx(ylmid - midprof.diameter/20, ylmid + midprof.diameter/20, &midprof.left_err);
 
-        cv::line(out,
-                 Point(line3_mid[2]-line3_mid[0]*100, line3_mid[3]-line3_mid[1]*100),
-                 Point(line3_mid[2]+line3_mid[0]*100, line3_mid[3]+line3_mid[1]*100),
-                 Scalar(128, 128 ,128),
-                 2, CV_AA);
+        midprof.left_corr = line3_mid[2]; // + (line3_mid[0]/(line3_mid[1] + 1e-6))*(ylmid - line3_mid[3]);
+        qDebug() << "Correction-Left-midline:" << QString::number(midprof.left_corr);
 
-        midprof.left_corr = line3_mid[2] + (line3_mid[0]/(line3_mid[1] + 1e-6))*(ylmid - line3_mid[3]);
-
+                cv::line(loc,
+                         Point(midprof.left_corr, ylmid - midprof.diameter/2),
+                         Point(midprof.left_corr, ylmid + midprof.diameter/2),
+                         Scalar(55, 55, 55),
+                         3, CV_AA);
         ///prava
         tmp = out; cv::flip(tmp, out, 1);
+        tmp = loc; cv::flip(tmp, loc, 1);
 
         //Vec4f line4 = eliptic_approx_hough(right_s1, out.rows - right_s2);
         Vec4f line4 = eliptic_approx(right_s1, out.rows - right_s2);
-
 
         double rdia = out.rows - right_s2 - right_s1;
         double raxis = fabs((line4[3] / (line4[1] + 1e-6) * line4[0]));
         double roffs = line4[2] - ((line4[3] - ldia/2) / (line4[1] + 1e-6) * line4[0]);
         qDebug() << "raxis" << QString::number(raxis);
-        right_corr = roffs + raxis;
-        qDebug() << "Correction-Right:" << QString::number(right_corr);
+        eliptic.right_corr = roffs + raxis;
+        qDebug() << "Correction-Right-eliptic:" << QString::number(eliptic.right_corr);
 
-                cv::ellipse(out, Point(right_corr, line1[2] + diameter/2), Size(abs(raxis), abs(rdia/2)),
+                cv::ellipse(loc, Point(eliptic.right_corr, line1[2] + eliptic.diameter/2), Size(abs(raxis), abs(rdia/2)),
                         0.0, 0.0, 360, Scalar(128, 128, 128), 2, 4);
-                cv::namedWindow("Cylinder bases", CV_WINDOW_AUTOSIZE);
-                cv::imshow("Cylinder bases", out);
 
         //zmereni praveho stredu (nejdelsiho lineprofilu)
-        float yrmid = (right_s1 + right_s2) / 2;
-        Vec4f line4_mid = linear_approx(yrmid - midprof.diameter/5, yrmid + midprof.diameter/5, &midprof.right_err);
+        float yrmid = (right_s1 + out.rows - right_s2) / 2;
+        Vec4f line4_mid = linear_approx(yrmid - midprof.diameter/20, yrmid + midprof.diameter/20, &midprof.right_err);
 
-        cv::line(out,
-                 Point(line4_mid[2]-line4_mid[0]*100, line4_mid[3]-line4_mid[1]*100),
-                 Point(line4_mid[2]+line4_mid[0]*100, line4_mid[3]+line4_mid[1]*100),
-                 Scalar(128, 128 ,128),
-                 2, CV_AA);
+        midprof.right_corr = line4_mid[2]; // + (line4_mid[0]/(line4_mid[1] + 1e-6))*(yrmid - line4_mid[3]);
+        qDebug() << "Correction-Right-midline:" << QString::number(midprof.right_corr);
 
-        midprof.right_corr = line4_mid[2] + (line4_mid[0]/(line4_mid[1] + 1e-6))*(yrmid - line4_mid[3]);
+                cv::line(loc,
+                         Point(midprof.right_corr, yrmid - midprof.diameter/2),
+                         Point(midprof.right_corr, yrmid + midprof.diameter/2),
+                         Scalar(55, 55, 55),
+                         3, CV_AA);
 
         midprof.length = out.cols - midprof.right_corr - midprof.left_corr;
         qDebug() << "Mid profile Length:" << QString::number(midprof.length );
 
         eliptic.length = out.cols - eliptic.left_corr - eliptic.right_corr;
         qDebug() << "Eliptic Length:" << QString::number(eliptic.length);
+
+        //vizualizace
+        cv::namedWindow("Roll-approximation", CV_WINDOW_AUTOSIZE);
+        cv::imshow("Roll-approximation", loc);
+
+        cv::namedWindow("Roll-original", CV_WINDOW_AUTOSIZE);
+//        cv::imshow("Roll-original", out);
 
         emit next(1, src);
         return 1;

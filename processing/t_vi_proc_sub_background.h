@@ -16,17 +16,24 @@ class t_vi_proc_sub_backgr : public i_proc_stage
 {
 
 private:
-    int thresh;
-    QString bpath;
+    int bck_lighter_thresh;
+    int bck_darker_thresh;
 
 public:
     t_vi_proc_sub_backgr(QString &path =  QString(":/js_config_sub_background.txt")):
         i_proc_stage(path)
     {
-        thresh = 30;
-        bpath = QString("back.bmp");
 
-        thresh = par["sub-threshold"].get().toInt();
+        //pozadi svetlejsi nez L1 je nahrazeno 0
+        bck_lighter_thresh = 32;
+        bck_lighter_thresh = par["bck-ligher-threshold"].get().toInt();
+
+        //popredi svetlejsi nez L2 zustava nezmeneno
+        bck_darker_thresh = 16;
+        bck_darker_thresh = par["bck-darker-threshold"].get().toInt();
+
+        //cesta ke snimku pozadi
+        bpath = QString("back.bmp");
         bpath = par["background"].get().toString();
 
         qDebug() << "Sub background image / diff-threshold:" << path << thresh;
@@ -38,13 +45,13 @@ public slots:
     int proc(int p1, void *p2){
 
         Mat tsrc = *(Mat *)p2;
-        //const char *std_bpath = bpath.toLatin1().data();
+        const char *std_bpath = bpath.toLatin1().data();
         //const char *std_bpath = "c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\back.bmp";
         //const char *std_bpath = "c:\\Users\\bernau84\\Pictures\\trima_daybackground\\trn_bck_exp1_1.bmp";
 
         if(p1 == 1){
 
-            imwrite(bck_path, tsrc);
+            imwrite(std_bpath, tsrc);
             return 1;
         }
 
@@ -60,8 +67,8 @@ public slots:
         Mat imp; cvtColor(tsrc, imp, CV_BGR2RGB);
         Mat out(imp.rows, imp.cols, CV_8UC3);
 
-        int L1 = 32;
-        int L2 = 16;
+        int L1 = bck_lighter_thresh;  //pozadi svetlejsi nez L1 je nahrazeno 0
+        int L2 = bck_darker_thresh;  //popredi svetlejsi nez L2 zustava nezmeneno
 
         //substract background and saturate
         //cv::absdiff(imp, bck, out);
