@@ -10,6 +10,8 @@
 using namespace cv;
 using namespace std;
 
+static const QString proc_roll_approx_defconfigpath(":/js_config_cylinder_approx.txt");
+
 class t_vi_proc_roll_approx : public i_proc_stage
 {
 
@@ -157,12 +159,7 @@ private:
                 float disty = Y - locations[i].y;
                 float r = sqrt(distx*distx + disty*disty);
 
-
                 float gama = atan((disty * A) / (distx * B + 1e-6));
-
-                float cx = r * cos(gama);
-                float cy = r * sin(gama);
-
                 float elipx = cos(gama) * B;
                 float elipy = sin(gama) * A;
                 float R = sqrt(elipx*elipx + elipy*elipy);
@@ -262,11 +259,9 @@ private:
     }
 
 public:
-    t_vi_proc_roll_approx(QString &path = QString(":/js_config_cylinder_approx.txt")):
+    t_vi_proc_roll_approx(const QString &path = proc_roll_approx_defconfigpath):
         i_proc_stage(path)
     {
-
-
     }
 
 

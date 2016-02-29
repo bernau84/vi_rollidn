@@ -10,6 +10,7 @@
 using namespace cv;
 using namespace std;
 
+static const QString proc_colortransf_defconfigpath(":/js_config_roi_colortransf.txt");
 
 class t_vi_proc_colortransf : public i_proc_stage
 {
@@ -18,7 +19,7 @@ private:
     cv::Rect roi;
 
 public:
-    t_vi_proc_colortransf(QString &path = QString(":/js_config_roi_colortransf.txt")):
+    t_vi_proc_colortransf(const QString &path = proc_colortransf_defconfigpath):
         i_proc_stage(path)
     {
         roi.x = roi.y = roi.width = roi.height = 0;

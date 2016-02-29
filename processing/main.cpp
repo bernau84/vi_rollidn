@@ -9,7 +9,6 @@ using namespace cv;
 using namespace std;
 
 #include "t_vi_proc_roi_grayscale.h"
-#include "t_vi_proc_roi_edgemax.h"
 #include "t_vi_proc_threshold_cont.h"
 #include "t_vi_proc_roll_approx.h"
 #include "t_vi_proc_sub_background.h"
@@ -22,7 +21,8 @@ int main(int argc, char *argv[])
     //Mat src = imread( "c:\\Users\\bernau84\\turnov-meroll-daylight.bmp" );
     //Mat src = imread( "c:\\Users\\bernau84\\Documents\\sandbox\\build-roll_idn_coll-Desktop_Qt_5_4_2_MSVC2010_OpenGL_32bit-Debug\\pic29.bmp", 1 );
     //Mat src = imread( "c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\smp.bmp" );
-    Mat src = imread( "c:\\Users\\bernau84\\Pictures\\test_roll_idn3.bmp");
+    //Mat src = imread( "c:\\Users\\bernau84\\Pictures\\test_roll_idn3.bmp");
+    Mat src = imread( "c:\\mares\\Workspace\\vi_rollidn\\processing\\test_roll_idn3.bmp");
     //Mat src = imread("c:\\Users\\bernau84\\Pictures\\trima_daybackground\\trn_meas_exp1_1_m1.bmp");
     //Mat src = imread("c:\\Users\\bernau84\\Pictures\\trima_precision_samples\\turnov-meroll-daylight-left-ex3-705x265mm_sel.bmp");
     //Mat src = imread("c:\\Users\\bernau84\\Pictures\\trima_precision_samples\\roll_1300mm_floor_prec2.bmp");
@@ -36,7 +36,6 @@ int main(int argc, char *argv[])
     t_vi_proc_colortransf ct;
     t_vi_proc_threshold th;
     t_vi_proc_roll_approx ms;
-    t_vi_proc_roi_canny cn;
     t_vi_proc_sub_backgr bk;
 
     //QObject::connect(&ct, SIGNAL(next(int, void *)), &cn, SLOT(proc(int, void *)));

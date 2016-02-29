@@ -11,6 +11,7 @@
 using namespace cv;
 using namespace std;
 
+static const QString proc_threshold_defconfigpath(":/js_config_threshold_cont.txt");
 
 class t_vi_proc_threshold : public i_proc_stage
 {
@@ -26,7 +27,7 @@ private:
     int min_contour_area;
 
 public:
-    t_vi_proc_threshold(QString &path =  QString(":/js_config_threshold_cont.txt")):
+    t_vi_proc_threshold(const QString &path = proc_threshold_defconfigpath):
         i_proc_stage(path)
     {
         thresh = 90;    /*! \todo - from collection */

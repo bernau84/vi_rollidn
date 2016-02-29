@@ -43,11 +43,10 @@ signals:
 
 public:
 
-    i_proc_stage(QString &js_config, QObject *parent = NULL):
+    i_proc_stage(const QString &js_config, QObject *parent = NULL):
         QObject(parent),
         par(__set_from_file(js_config))
     {
-        js_config = js_config; /*! \todo init collection from file */
     }
 
     virtual ~i_proc_stage(){;}

@@ -12,6 +12,8 @@
 using namespace cv;
 using namespace std;
 
+static const QString proc_sub_backgr_defconfigpath(":/js_config_sub_background.txt");
+
 class t_vi_proc_sub_backgr : public i_proc_stage
 {
 
@@ -21,7 +23,7 @@ private:
     QString bpath;
 
 public:
-    t_vi_proc_sub_backgr(QString &path =  QString(":/js_config_sub_background.txt")):
+    t_vi_proc_sub_backgr(const QString &path = proc_sub_backgr_defconfigpath):
         i_proc_stage(path)
     {
 
