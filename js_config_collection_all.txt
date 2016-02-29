@@ -3,17 +3,33 @@
                 "__info": "tcp listener port",
                 "__def": 9100
         },
-        "calibr-L": {
-                "__info": "calibration constant for smallest roll diameter [pix / mm]",
+        "calibr-y": {
+                "__info": "calibration constant in horizontal axis [pix / mm]",
                 "__def": 1.0,
                 "__min": 0.001,
                 "__max": 1000
         },
-        "calibr-D": {
-                "__info": "calibration constant for biggest roll diameter [pix / mm]",
+        "calibr-x": {
+                "__info": "calibration constant in vertical axis [pix / mm]",
                 "__def": 1.0,
                 "__min": 0.001,
                 "__max": 1000
+        },
+        "focal-y": {
+                "__info": "vertical focal length in mm",
+                "__def": 0.0,
+                "__min": 0.001,
+                "__max": 1000
+        },
+        "focal-x": {
+                "__info": "horizontal focal length in mm",
+                "__def": 0.0,
+                "__min": 0.001,
+                "__max": 1000
+        },
+        "geometry-params": {
+                "__info": "projection scene dimension description in mm",
+                "__def": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         },
         "ROI-width": {
                 "__info": "roi width",

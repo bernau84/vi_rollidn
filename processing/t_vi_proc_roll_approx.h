@@ -28,6 +28,9 @@ public:
 
     t_vi_proc_roll_ind_res midprof;   //mereni nejdelsi stredni cary
     t_vi_proc_roll_ind_res eliptic;   //mereni stredu aproximovanych eliptickych cel
+    float eliptic_left_radius;  //doplnkova informace
+    float eliptic_right_radius;
+
 private:
 
     Mat out;
@@ -273,6 +276,9 @@ public slots:
         memset(&eliptic, 0, sizeof(t_vi_proc_roll_ind_res));
         memset(&midprof, 0, sizeof(t_vi_proc_roll_ind_res));
 
+        eliptic_left_radius = -1;  //jako non-init
+        eliptic_right_radius = -1;
+
         p1 = p1;
         cv::Mat *src = (Mat *)p2;
         cv::Mat tmp;
@@ -328,9 +334,11 @@ public slots:
         double laxis = fabs(line3[3] / (line3[1] + 1e-6) * line3[0]);  //druha poloosa elipsy
         double ldia = out.rows - left_s2 - left_s1;  //prvni poloosa
         double loffs = line3[2] - ((line3[3] - ldia/2) / (line3[1] + 1e-6) * line3[0]);  //posun v xove ose
-        qDebug() << "laxis" << QString::number(laxis);
+
         eliptic.left_corr = loffs + laxis;  //shift calc - ie. transform from parametric to y=f(x) eq.
-        qDebug() << "Correction-Left-eliptic:" << QString::number(eliptic.left_corr);
+        eliptic_left_radius = laxis;
+        qDebug() << "Correction-Left-eliptic:" << QString::number(eliptic.left_corr) <<
+                    ", radius" << QString::number(eliptic_left_radius);
 
                 cv::ellipse(loc, Point(eliptic.left_corr, line1[2] + eliptic.diameter/2), Size(abs(laxis), abs(ldia/2)),
                         0.0, 0.0, 360, Scalar(128, 128 ,128), 2, 4);
@@ -354,12 +362,14 @@ public slots:
         //Vec4f line4 = eliptic_approx_hough(right_s1, out.rows - right_s2);
         Vec4f line4 = eliptic_approx(right_s1, out.rows - right_s2, &eliptic.right_err);
 
-        double rdia = out.rows - right_s2 - right_s1;
         double raxis = fabs((line4[3] / (line4[1] + 1e-6) * line4[0]));
+        double rdia = out.rows - right_s2 - right_s1;
         double roffs = line4[2] - ((line4[3] - ldia/2) / (line4[1] + 1e-6) * line4[0]);
-        qDebug() << "raxis" << QString::number(raxis);
+
         eliptic.right_corr = roffs + raxis;
-        qDebug() << "Correction-Right-eliptic:" << QString::number(eliptic.right_corr);
+        eliptic_right_radius = raxis;
+        qDebug() << "Correction-Right-eliptic:" << QString::number(eliptic.right_corr) <<
+                    ", radius" << QString::number(eliptic_right_radius);
 
                 cv::ellipse(loc, Point(eliptic.right_corr, line1[2] + eliptic.diameter/2), Size(abs(raxis), abs(rdia/2)),
                         0.0, 0.0, 360, Scalar(128, 128, 128), 2, 4);

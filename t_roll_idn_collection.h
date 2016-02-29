@@ -33,6 +33,9 @@ class t_roll_idn_collection : public QObject {
     Q_OBJECT
 
 private:
+    double mm_diameter;  //last final vaules in mm
+    double mm_length;
+
     //constructor helpers
     QJsonObject __from_file(){
 
@@ -71,12 +74,95 @@ private:
         return false;
     }
 
+    //little gin endian conv - for plc comm conventions
     uint32_t __to_rev_endian(uint32_t word){
 
         return ((word >> 24) & 0xFF) << 0 |
                ((word >> 16) & 0xFF) << 8 |
                ((word >> 8) & 0xFF) << 16 |
                ((word >> 0) & 0xFF) << 24;
+    }
+
+    //comapare errors in aproximation and mid line measurement, choose better
+    //recalc to mm using focal length or calibration constant
+    void __eval_measurement_res(){
+
+        mm_diameter = 0;  //signal invalid measurement
+        mm_length = 0;
+
+        if((th.maxContRect.size.height * th.maxContRect.size.width) < ERR_MEAS_MINAREA_TH){
+
+            error_mask |= VI_ERR_MEAS1;  //nepovedlo se zamerit polohu role ve scene
+            return;
+        }
+
+        int raw_diameter = ms.midprof.diameter;  //berem stredni caru jako vychozi metodu
+        int raw_length = ms.midprof.length;
+
+        int overal_length_err_elipse = ms.eliptic.left_err + ms.eliptic.right_err;
+        int overal_length_err_midline = ms.midprof.left_err + ms.midprof.right_err;
+
+        if((ms.midprof.diameter * ms.midprof.length) < ERR_MEAS_MINAREA_TH){
+
+            overal_length_err_midline = 1e+6; //bypass - tudle metodu nebrat
+            error_mask |= VI_ERR_MEAS2;
+       }
+
+        if((ms.eliptic.diameter * ms.eliptic.length) < ERR_MEAS_MINAREA_TH){
+
+            overal_length_err_midline = 1e+6; //bypass - tudle metodu nebrat
+            error_mask |= VI_ERR_MEAS3;
+        }
+
+        if((error_mask & VI_ERR_MEAS3) && (error_mask & VI_ERR_MEAS2)){
+
+            return; //nepodarilo se odmerit ani jednou metodou - koncime
+        }
+
+        if(overal_length_err_elipse < overal_length_err_midline){
+
+            raw_diameter = ms.eliptic.diameter;  //elipsy vychazeji lepe - berem je
+            raw_length = ms.eliptic.length + ms.eliptic_left_radius + ms.eliptic_right_radius;
+        }
+
+        double ratio_l = par["calibr-x"].get().toDouble();
+        double ratio_d = par["calibr-y"].get().toDouble();
+
+        double f_l = par["focal-x"].get().toDouble();
+        double f_d = par["focal-y"].get().toDouble();
+        QList<QVariant> z_param = par["geometry-params"].get().toArray().toVariantList();
+
+        if(f_l && f_d && z_param.size()){  //mame identifikovano ukameru a mame z ceho vypocitat vzdalenost sceny?
+
+            double conv_d = z_param[0].toDouble() / f_d;
+            double conv_l = z_param[0].toDouble() / f_l;
+
+            mm_diameter = conv_d * raw_diameter;
+            mm_length = conv_l * raw_length;
+
+            if(z_param.size() > 1)
+                if(z_param[1].isValid()){ //mame zpresnujici udaje o scene
+
+                    /*! \todo - z uhlu pasu a ze zmerenho prumeru upravime conv_l */
+                }
+
+        } else if(ratio_l && ratio_d) {  //mame alespon hruby calibracni prepocet pix -> mm?
+
+            mm_diameter = ratio_d * raw_diameter;
+            mm_length = ratio_l * raw_length;
+        } else {
+
+            error_mask |= VI_ERR_MEAS4; //nemame jak udelat prepocet
+            return;
+        }
+
+        log += QString("meas-x: w=%1[mm],pix=%2\r\n")
+                .arg(mm_length)
+                .arg(raw_length);
+
+        log += QString("meas-y: h=%1[mm],pix=%2\r\n")
+                .arg(mm_diameter)
+                .arg(raw_diameter);
     }
 
 public slots:
@@ -98,7 +184,7 @@ public slots:
         ord_st.width = __to_rev_endian(ord_st.height);
 
         log.clear();
-        log += QString("rx: ord(%1),flags(0x%2),width(%3),height(%4)\r\n")
+        log += QString("<--rx: ord(%1),flags(0x%2),width(%3),height(%4)\r\n")
                 .arg(unsigned(ord_st.ord))
                 .arg(unsigned(ord_st.flags), 2, 16, QChar('0'))
                 .arg(ord_st.width / 10.0)
@@ -108,76 +194,55 @@ public slots:
 
             case VI_PLC_PC_TRIGGER: //meas
             {
-                log += QString("rx: TRIGGER\r\n");
+                log += QString("<--rx: TRIGGER\r\n");
 
                 store.increment();
 
-                //potvrdime prijem
                 error_mask = VI_ERR_OK;
 
+                //potvrdime prijem
                 t_comm_binary_rollidn reply_st1 = {(uint16_t)VI_PLC_PC_TRIGGER_ACK, error_mask, 0, 0};
                 QByteArray reply_by1((const char *)&reply_st1, sizeof(t_comm_binary_rollidn));
-                iface.on_write(reply_by1);
+                iface.on_write(reply_by1); //tx ack to plc
 
                 int res = on_trigger();
                 if(!res) res = on_trigger(); //opakujem 2x pokud se mereni nepovede
 
-                if((th.maxContRect.size.height * th.maxContRect.size.width) < ERR_MEAS_MINAREA_TH)
-                    error_mask |= VI_ERR_MEAS1;
+                __eval_measurement_res();  //prepocet na mm
 
-                if((ms.eliptic.diameter * ms.eliptic.length) < ERR_MEAS_MINAREA_TH)
-                    error_mask |= VI_ERR_MEAS2;
+                uint32_t s_dia = mm_diameter * 10;
+                uint32_t s_len = mm_length * 10;
 
-                double ratio_l = par["calibr-L"].get().toDouble();
-                double ratio_d = par["calibr-D"].get().toDouble();
-
-                log += QString("meas-x: w=%1[mm],pix=%2,ratio=%3\r\n")
-                        .arg(ms.eliptic.length * ratio_l)
-                        .arg(ms.eliptic.length)
-                        .arg(ratio_l);
-
-                log += QString("meas-y: h=%1[mm],pix=%2,ratio=%3\r\n")
-                        .arg(ms.eliptic.diameter * ratio_d)
-                        .arg(ms.eliptic.diameter)
-                        .arg(ratio_d);
-
-                ms.eliptic.diameter *= ratio_d;
-                ms.eliptic.length *= ratio_l;
-
-                uint32_t s_dia = ms.eliptic.diameter * 10;
-                uint32_t s_len = ms.eliptic.length * 10;
-
-                t_comm_binary_rollidn reply_st2 = {(uint16_t)VI_PLC_PC_RESULT, error_mask,
-                                                   __to_rev_endian(s_len),
-                                                   __to_rev_endian(s_dia)};
+                //odeslani vysledku
+                t_comm_binary_rollidn reply_st2 = {(uint16_t)VI_PLC_PC_RESULT, error_mask,  __to_rev_endian(s_len), __to_rev_endian(s_dia)};
                 QByteArray reply_by2((const char *)&reply_st2, sizeof(t_comm_binary_rollidn));
-                iface.on_write(reply_by2);
+                iface.on_write(reply_by2);  //tx results to plc
 
-                log += QString("tx: RESULT\r\n");
-                log += QString("tx: ord(%1),flags(0x%2),len(%3),dia(%4)\r\n")
+                log += QString("-->tx: RESULT\r\n");
+                log += QString("-->tx: ord(%1),flags(0x%2),len(%3),dia(%4)\r\n")
                         .arg(unsigned(reply_st2.ord))
                         .arg(unsigned(reply_st2.flags), 2, 16, QChar('0'))
-                        .arg(reply_st2.width)
-                        .arg(reply_st2.height);
+                        .arg(mm_diameter)
+                        .arg(mm_length);
             }
             break;
             case VI_PLC_PC_ABORT:
-                log += QString("rx: ABORT\r\n");
+                log += QString("<--rx: ABORT\r\n");
                 on_abort(); //nastavi preruseni a ceka na jeho vyhodnoceni
                 //a prekontrolujem jak na tom sme
             break;
             case VI_PLC_PC_READY:
             {
-                log += QString("rx: READY\r\n");
+                log += QString("<--rx: READY\r\n");
                 if(on_ready()){
                     //potvrdime prijem
-                    log += QString("tx: READY\r\n");
+                    log += QString("-->tx: READY\r\n");
                     t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_READY, 0/*error_mask*/, 0, 0};
                     QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
                     iface.on_write(reply_by);
                 } else {
                     //nejsme operabilni
-                    log += QString("tx: ERROR\r\n");
+                    log += QString("-->tx: ERROR\r\n");
                     t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_ERROR, error_mask, 0, 0};
                     QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
                     iface.on_write(reply_by);
@@ -198,7 +263,7 @@ public slots:
             break;
             case VI_PLC_PC_CALIBRATE:
             {
-                log += QString("rx: CALIBRATE\r\n");
+                log += QString("<--rx: CALIBRATE\r\n");
                 store.increment();
 
                 error_mask = VI_ERR_OK;
@@ -214,9 +279,9 @@ public slots:
                 if(error_mask == VI_ERR_OK){
 
                     double c1d = (ord_st.width / 10.0) / ms.eliptic.length;
-                    t_setup_entry c1; par.ask("calibr-L", &c1);
+                    t_setup_entry c1; par.ask("calibr-x", &c1);
                     c1.set(c1d);
-                    par.replace("calibr-L", c1);
+                    par.replace("calibr-x", c1);
 
                     log += QString("cal-x: ref=%1[mm],pix=%2,ratio=%3\r\n")
                             .arg(ord_st.width)
@@ -224,9 +289,9 @@ public slots:
                             .arg(ord_st.width / ms.eliptic.length);
 
                     double c2d = (ord_st.height / 10.0) / ms.eliptic.diameter;
-                    t_setup_entry c2; par.ask("calibr-D", &c2);
+                    t_setup_entry c2; par.ask("calibr-y", &c2);
                     c2.set(c2d);
-                    par.replace("calibr-D", c2);
+                    par.replace("calibr-y", c2);
 
                     log += QString("cal-y: ref=%1[mm],pix=%2,ratio=%3\r\n")
                             .arg(ord_st.height)
@@ -237,16 +302,19 @@ public slots:
                 }
 
                 //potvrdime vysledek - pokud se nepovedlo vratime nejaky error bit + nesmyslne hodnoty mereni width & height
-                t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_CALIBRATE_ACK, error_mask, ms.eliptic.length, ms.eliptic.diameter};
+                //jinak hodnoty v raw == v pixelech
+                t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_CALIBRATE_ACK, error_mask,
+                                                  __to_rev_endian(ms.eliptic.length),
+                                                  __to_rev_endian(ms.eliptic.diameter)};
                 QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
                 iface.on_write(reply_by);
 
-                log += QString("tx: CALIBRATE_ACK\r\n");
-                log += QString("tx: ord(%1),flags(0x%2),len(%3),dia(%4)\r\n")
+                log += QString("-->tx: CALIBRATE_ACK\r\n");
+                log += QString("-->tx: ord(%1),flags(0x%2),len(%3),dia(%4)\r\n")
                         .arg(unsigned(reply_st.ord))
                         .arg(unsigned(reply_st.flags), 2, 16, QChar('0'))
-                        .arg(reply_st.width)
-                        .arg(reply_st.height);
+                        .arg(ms.eliptic.length)
+                        .arg(ms.eliptic.diameter);
             }
             break;
         }
