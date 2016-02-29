@@ -194,7 +194,7 @@ public:
         {
             // Error handling.
             cerr << "An exception occurred." << endl
-            << e.GetDescription() << endl;
+                    << e.GetDescription() << endl;
             return -102;
         }
 

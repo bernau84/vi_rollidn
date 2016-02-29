@@ -33,6 +33,27 @@ class t_roll_idn_collection : public QObject {
     Q_OBJECT
 
 private:
+
+    QImage snapshot;
+    QString path;
+    QString log;
+
+    t_collection par;
+    bool abort;
+    uint32_t error_mask;  //suma flagu e_vi_plc_pc_errors
+
+    t_vi_camera_basler_usb cam_device;
+    t_vi_camera_offline_file cam_simul;
+
+    t_vi_proc_colortransf ct;
+    t_vi_proc_threshold th;
+    t_vi_proc_roll_approx ms;
+    t_vi_proc_sub_backgr bc;
+
+    t_comm_tcp_rollidn iface;
+
+    t_roll_idn_record_storage store;
+
     double mm_diameter;  //last final vaules in mm
     double mm_length;
 
@@ -93,6 +114,7 @@ private:
         if((th.maxContRect.size.height * th.maxContRect.size.width) < ERR_MEAS_MINAREA_TH){
 
             error_mask |= VI_ERR_MEAS1;  //nepovedlo se zamerit polohu role ve scene
+            log += QString("meas-error: 1(no ROI with roll)");
             return;
         }
 
@@ -110,12 +132,13 @@ private:
 
         if((ms.eliptic.diameter * ms.eliptic.length) < ERR_MEAS_MINAREA_TH){
 
-            overal_length_err_midline = 1e+6; //bypass - tudle metodu nebrat
+            overal_length_err_elipse = 1e+6; //bypass - tudle metodu nebrat
             error_mask |= VI_ERR_MEAS3;
         }
 
         if((error_mask & VI_ERR_MEAS3) && (error_mask & VI_ERR_MEAS2)){
 
+            log += QString("meas-error: 2+3(unmeasured)");
             return; //nepodarilo se odmerit ani jednou metodou - koncime
         }
 
@@ -153,6 +176,7 @@ private:
         } else {
 
             error_mask |= VI_ERR_MEAS4; //nemame jak udelat prepocet
+            log += QString("meas-error: 4(uncalibred)");
             return;
         }
 
@@ -201,7 +225,7 @@ public slots:
                 error_mask = VI_ERR_OK;
 
                 //potvrdime prijem
-                t_comm_binary_rollidn reply_st1 = {(uint16_t)VI_PLC_PC_TRIGGER_ACK, error_mask, 0, 0};
+                t_comm_binary_rollidn reply_st1 = {(uint16_t)VI_PLC_PC_TRIGGER_ACK, __to_rev_endian(error_mask), 0, 0};
                 QByteArray reply_by1((const char *)&reply_st1, sizeof(t_comm_binary_rollidn));
                 iface.on_write(reply_by1); //tx ack to plc
 
@@ -214,7 +238,10 @@ public slots:
                 uint32_t s_len = mm_length * 10;
 
                 //odeslani vysledku
-                t_comm_binary_rollidn reply_st2 = {(uint16_t)VI_PLC_PC_RESULT, error_mask,  __to_rev_endian(s_len), __to_rev_endian(s_dia)};
+                t_comm_binary_rollidn reply_st2 = {(uint16_t)VI_PLC_PC_RESULT,
+                                                   __to_rev_endian(error_mask),
+                                                   __to_rev_endian(s_len),
+                                                   __to_rev_endian(s_dia)};
                 QByteArray reply_by2((const char *)&reply_st2, sizeof(t_comm_binary_rollidn));
                 iface.on_write(reply_by2);  //tx results to plc
 
@@ -243,23 +270,34 @@ public slots:
                 } else {
                     //nejsme operabilni
                     log += QString("-->tx: ERROR\r\n");
-                    t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_ERROR, error_mask, 0, 0};
+                    t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_ERROR,
+                                                       __to_rev_endian(error_mask), 0, 0};
                     QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
                     iface.on_write(reply_by);
                 }
             }
             break;
             case VI_PLC_PC_BACKGROUND:
-                //if(cam_device == basler) /*! \todo */
-                if(cam_device.exposure(-100)){ //100us tolerance to settling exposure
+            {
+
+                error_mask = VI_ERR_OK;
+
+                if(cam_device.sta != i_vi_camera_base::CAMSTA_PREPARED)
+                    error_mask |= VI_ERR_CAM_NOTFOUND;
+                else if(cam_device.exposure(-100)){ //100us tolerance to settling exposure
 
                     on_trigger(true); //true == background mode
                     if(error_mask == VI_ERR_OK){
 
-
                     }
                 }
-
+                //odvysilame vysledek
+                log += QString("-->tx: BACKGROUND_ACK\r\n");
+                t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_BACKGROUND_ACK,
+                                                  __to_rev_endian(error_mask), 0, 0};
+                QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
+                iface.on_write(reply_by);
+            }
             break;
             case VI_PLC_PC_CALIBRATE:
             {
@@ -278,32 +316,35 @@ public slots:
 
                 if(error_mask == VI_ERR_OK){
 
+                    //count new scale factor + save in config
                     double c1d = (ord_st.width / 10.0) / ms.eliptic.length;
                     t_setup_entry c1; par.ask("calibr-x", &c1);
                     c1.set(c1d);
                     par.replace("calibr-x", c1);
 
                     log += QString("cal-x: ref=%1[mm],pix=%2,ratio=%3\r\n")
-                            .arg(ord_st.width)
+                            .arg(ord_st.width / 10.0)
                             .arg(ms.eliptic.length)
-                            .arg(ord_st.width / ms.eliptic.length);
+                            .arg(c1d);
 
+                    //count new scale factor + save in config
                     double c2d = (ord_st.height / 10.0) / ms.eliptic.diameter;
                     t_setup_entry c2; par.ask("calibr-y", &c2);
                     c2.set(c2d);
                     par.replace("calibr-y", c2);
 
                     log += QString("cal-y: ref=%1[mm],pix=%2,ratio=%3\r\n")
-                            .arg(ord_st.height)
+                            .arg(ord_st.height / 10.0)
                             .arg(ms.eliptic.diameter)
-                            .arg(ord_st.height / ms.eliptic.diameter);
+                            .arg(c2d);
 
                     __to_file();
                 }
 
                 //potvrdime vysledek - pokud se nepovedlo vratime nejaky error bit + nesmyslne hodnoty mereni width & height
                 //jinak hodnoty v raw == v pixelech
-                t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_CALIBRATE_ACK, error_mask,
+                t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_CALIBRATE_ACK,
+                                                  __to_rev_endian(error_mask),
                                                   __to_rev_endian(ms.eliptic.length),
                                                   __to_rev_endian(ms.eliptic.diameter)};
                 QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
@@ -334,14 +375,26 @@ public slots:
         int pisize = 0;
         for(int rep = 0; pisize <= 0; rep++){
 
-            if(cam_device.sta == i_vi_camera_base::CAMSTA_PREPARED)
+            if(cam_device.sta == i_vi_camera_base::CAMSTA_PREPARED){
+
                 pisize = cam_device.snap(img, 4000 * 3000 * 4, &info);
-            else
+            } else {
+
+                error_mask |= VI_ERR_CAM_NOTFOUND;
                 pisize = cam_simul.snap(img, 4000 * 3000 * 4, &info);
+            }
 
             if((rep >= 5) || abort){
 
-                /*! \todo - vyhlasime chybu */
+                error_mask |= VI_ERR_CAM_TIMEOUT;
+                switch(pisize){
+
+                    case 0:     error_mask |= VI_ERR_CAM_SNAPERR;   break;
+                    case -101:  error_mask |= VI_ERR_CAM_BADPICT;   break;
+                    case -102:  error_mask |= VI_ERR_CAM_EXCEPTION; break;
+                }
+
+                log += QString("cam-error: timeout");
                 abort = false;
                 return 0;
             }
@@ -350,12 +403,18 @@ public slots:
             loop.processEvents();
         }
 
+        if(info.w * info.h <= 0){
+
+            error_mask |= VI_ERR_CAM_BADPICT;
+            log += QString("cam-error: bad picture");
+            return 0;
+        }
+
         snapshot = QImage(img, info.w, info.h, (QImage::Format)info.format);
         store.insert(snapshot);
 
-        cv::Mat src(info.h, info.w, CV_8UC4, img);
-
         //process measurement or save new background
+        cv::Mat src(info.h, info.w, CV_8UC4, img);
         bc.proc((background) ? 1 : 0, &src);
 
         delete[] img;
@@ -379,31 +438,10 @@ public slots:
 
     int on_calibration(){
 
-        /*! \todo chessboard full calibration */
-        //return on_trigger();
-        return 0;
+        return on_trigger();
     }
 
 public:
-    QImage snapshot;
-    QString path;
-    QString log;
-
-    t_collection par;
-    bool abort;
-    uint32_t error_mask;  //suma flagu e_vi_plc_pc_errors
-
-    t_vi_camera_basler_usb cam_device;
-    t_vi_camera_offline_file cam_simul;
-
-    t_vi_proc_colortransf ct;
-    t_vi_proc_threshold th;
-    t_vi_proc_roll_approx ms;
-    t_vi_proc_sub_backgr bc;
-
-    t_comm_tcp_rollidn iface;
-
-    t_roll_idn_record_storage store;
 
     int initialize(){
 

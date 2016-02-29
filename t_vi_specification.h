@@ -12,6 +12,7 @@
 
 //puvodne to byly ciala ale jakubneu to pochopil jako masku - budiz tedy
 enum e_vi_plc_pc_ords {
+
     VI_PLC_PC_TRIGGER = (0 << 8),
     VI_PLC_PC_ABORT = (1 << 8),
     VI_PLC_PC_RESULT = (2 << 8),
@@ -21,23 +22,34 @@ enum e_vi_plc_pc_ords {
     VI_PLC_PC_READY = (6 << 8),
     VI_PLC_PC_CALIBRATE = (7 << 8),
     VI_PLC_PC_CALIBRATE_ACK = (8 << 8),
-    VI_PLC_PC_BACKGROUND = (9 << 8)
+    VI_PLC_PC_BACKGROUND = (9 << 8),
+    VI_PLC_PC_BACKGROUND_ACK = (10 << 8)
 };
 
 
 enum e_vi_plc_pc_errors {
+
     VI_ERR_OK = (1 << 0),
     VI_ERR_COMM_SYNTAX = (1 << 1),
     VI_ERR_COMM_TIMEOUT = (1 << 2),      //na prijem kompletniho datagramu mysleno
+
     VI_ERR_PLC1 = (1 << 3),
     VI_ERR_PLC2 = (1 << 4),
     VI_ERR_PLC3 = (1 << 5),
-    VI_ERR_CAM_INIT = (1 << 10),
-    VI_ERR_CAM_ACQ = (1 << 11),
-    VI_ERR_CAM_OFFLINE = (1 << 12),
+
+    VI_ERR_CAM_NOTFOUND = (1 << 10),
+    VI_ERR_CAM_INITERR = (1 << 11),
+    VI_ERR_CAM_TIMEOUT = (1 << 12),
+    VI_ERR_CAM_BADPICT = (1 << 13),
+    VI_ERR_CAM_EXCEPTION = (1 << 14),
+    VI_ERR_CAM_SNAPERR = (1 << 15),
+
     VI_ERR_MEAS1 = (1 << 20),
     VI_ERR_MEAS2 = (1 << 21),
     VI_ERR_MEAS3 = (1 << 22),
+    VI_ERR_MEAS4 = (1 << 23),
+    VI_ERR_MEAS5 = (1 << 24),
+    VI_ERR_MEAS6 = (1 << 25)
 };
 
 #pragma pack(push,1)
