@@ -62,8 +62,8 @@ private:
 
         if(err){
 
-            float a = line[3];
-            float b = line[2];
+            float a = line[1];
+            float b = -line[0];
             float c = line[0]*line[3] - line[1]*line[2]; //algebraicky tvar primky
             float d = sqrt(a*a + b*b);
             float cumsum = 0;
@@ -143,16 +143,31 @@ private:
 
         if(err){
 
-            float a = line[3];
-            float b = line[2];
-            float c = line[0]*line[3] - line[1]*line[2]; //algebraicky tvar primky
-            float d = sqrt(a*a + b*b);
+            //chyba jako cumsum rozilu radiusu
+            double B = fabs(line[3] / (line[1] + 1e-6) * line[0]);  //druha poloosa elipsy
+            double A = lheight / 2;  //prvni poloosa
+            double X = line[2] - ((line[3] - A) / (line[1] + 1e-6) * line[0]);  //posun v xove ose
+            double Y = lheight / 2;  //posun v yove ose
+
             float cumsum = 0;
 
             for(unsigned i=0; i<locations.size(); i++){
 
-                float dist = fabs(a*locations[i].x + b*locations[i].y + c) / d;
-                cumsum += dist;
+                float distx = fabs(locations[i].x - X - B);
+                float disty = Y - locations[i].y;
+                float r = sqrt(distx*distx + disty*disty);
+
+
+                float gama = atan((disty * A) / (distx * B + 1e-6));
+
+                float cx = r * cos(gama);
+                float cy = r * sin(gama);
+
+                float elipx = cos(gama) * B;
+                float elipy = sin(gama) * A;
+                float R = sqrt(elipx*elipx + elipy*elipy);
+
+                cumsum += fabs(R - r);
             }
 
             *err = cumsum / locations.size();
@@ -200,7 +215,7 @@ private:
 
         if(locations_t.size()){
 
-            cv::fitLine(locations_t, line, CV_DIST_L2, 0, 0.01, 0.01);
+            cv::fitLine(locations_t, line, CV_DIST_L1, 0, 0.01, 0.01);
 
             vector<Vec4i> lines;
             HoughLinesP(trans, lines, 1, CV_PI/180, 50, 0, 0 );
@@ -313,7 +328,7 @@ public slots:
 
         //apriximace cela elipsou
         //Vec4f line3 = eliptic_approx_hough(left_s1, out.rows - left_s2);
-        Vec4f line3 = eliptic_approx(left_s1, out.rows - left_s2);
+        Vec4f line3 = eliptic_approx(left_s1, out.rows - left_s2, &eliptic.left_err);
 
         double laxis = fabs(line3[3] / (line3[1] + 1e-6) * line3[0]);  //druha poloosa elipsy
         double ldia = out.rows - left_s2 - left_s1;  //prvni poloosa
@@ -327,9 +342,9 @@ public slots:
 
         //zmereni leveho stredu (nejdelsiho lineprofilu)
         float ylmid = (left_s1 + out.rows - left_s2) / 2;
-        Vec4f line3_mid = linear_approx(ylmid - midprof.diameter/20, ylmid + midprof.diameter/20, &midprof.left_err);
+        Vec4f line3_mid = linear_approx(ylmid - midprof.diameter/10, ylmid + midprof.diameter/10, &midprof.left_err);
 
-        midprof.left_corr = line3_mid[2]; // + (line3_mid[0]/(line3_mid[1] + 1e-6))*(ylmid - line3_mid[3]);
+        midprof.left_corr = line3_mid[2];// + (line3_mid[0]/(line3_mid[1] + 1e-6))*(ylmid - line3_mid[3]);
         qDebug() << "Correction-Left-midline:" << QString::number(midprof.left_corr);
 
                 cv::line(loc,
@@ -342,7 +357,7 @@ public slots:
         tmp = loc; cv::flip(tmp, loc, 1);
 
         //Vec4f line4 = eliptic_approx_hough(right_s1, out.rows - right_s2);
-        Vec4f line4 = eliptic_approx(right_s1, out.rows - right_s2);
+        Vec4f line4 = eliptic_approx(right_s1, out.rows - right_s2, &eliptic.right_err);
 
         double rdia = out.rows - right_s2 - right_s1;
         double raxis = fabs((line4[3] / (line4[1] + 1e-6) * line4[0]));
@@ -356,7 +371,7 @@ public slots:
 
         //zmereni praveho stredu (nejdelsiho lineprofilu)
         float yrmid = (right_s1 + out.rows - right_s2) / 2;
-        Vec4f line4_mid = linear_approx(yrmid - midprof.diameter/20, yrmid + midprof.diameter/20, &midprof.right_err);
+        Vec4f line4_mid = linear_approx(yrmid - midprof.diameter/10, yrmid + midprof.diameter/10, &midprof.right_err);
 
         midprof.right_corr = line4_mid[2]; // + (line4_mid[0]/(line4_mid[1] + 1e-6))*(yrmid - line4_mid[3]);
         qDebug() << "Correction-Right-midline:" << QString::number(midprof.right_corr);
@@ -368,16 +383,18 @@ public slots:
                          3, CV_AA);
 
         midprof.length = out.cols - midprof.right_corr - midprof.left_corr;
-        qDebug() << "Mid profile Length:" << QString::number(midprof.length );
+        qDebug() << "Mid-profile Length:" << QString::number(midprof.length) <<
+            QString("(+/-%1 on left, +/-%2 on right)").arg(midprof.left_err).arg(midprof.right_err);
 
         eliptic.length = out.cols - eliptic.left_corr - eliptic.right_corr;
-        qDebug() << "Eliptic Length:" << QString::number(eliptic.length);
+        qDebug() << "Eliptic Length:" << QString::number(eliptic.length) <<
+            QString("(+/-%1 on left, +/-%2 on right)").arg(eliptic.left_err).arg(eliptic.right_err);
 
         //vizualizace
         cv::namedWindow("Roll-approximation", CV_WINDOW_AUTOSIZE);
         cv::imshow("Roll-approximation", loc);
 
-        cv::namedWindow("Roll-original", CV_WINDOW_AUTOSIZE);
+//        cv::namedWindow("Roll-original", CV_WINDOW_AUTOSIZE);
 //        cv::imshow("Roll-original", out);
 
         emit next(1, src);

@@ -125,27 +125,27 @@ public slots:
                 if((th.maxContRect.size.height * th.maxContRect.size.width) < ERR_MEAS_MINAREA_TH)
                     error_mask |= VI_ERR_MEAS1;
 
-                if((ms.diameter * ms.length) < ERR_MEAS_MINAREA_TH)
+                if((ms.eliptic.diameter * ms.eliptic.length) < ERR_MEAS_MINAREA_TH)
                     error_mask |= VI_ERR_MEAS2;
 
                 double ratio_l = par["calibr-L"].get().toDouble();
                 double ratio_d = par["calibr-D"].get().toDouble();
 
                 log += QString("meas-x: w=%1[mm],pix=%2,ratio=%3\r\n")
-                        .arg(ms.length * ratio_l)
-                        .arg(ms.length)
+                        .arg(ms.eliptic.length * ratio_l)
+                        .arg(ms.eliptic.length)
                         .arg(ratio_l);
 
                 log += QString("meas-y: h=%1[mm],pix=%2,ratio=%3\r\n")
-                        .arg(ms.diameter * ratio_d)
-                        .arg(ms.diameter)
+                        .arg(ms.eliptic.diameter * ratio_d)
+                        .arg(ms.eliptic.diameter)
                         .arg(ratio_d);
 
-                ms.diameter *= ratio_d;
-                ms.length *= ratio_l;
+                ms.eliptic.diameter *= ratio_d;
+                ms.eliptic.length *= ratio_l;
 
-                uint32_t s_dia = ms.diameter * 10;
-                uint32_t s_len = ms.length * 10;
+                uint32_t s_dia = ms.eliptic.diameter * 10;
+                uint32_t s_len = ms.eliptic.length * 10;
 
                 t_comm_binary_rollidn reply_st2 = {(uint16_t)VI_PLC_PC_RESULT, error_mask,
                                                    __to_rev_endian(s_len),
@@ -208,36 +208,36 @@ public slots:
                 if((th.maxContRect.size.height * th.maxContRect.size.width) < ERR_MEAS_MINAREA_TH)
                     error_mask |= VI_ERR_MEAS1;
 
-                if((ms.diameter * ms.length) < ERR_MEAS_MINAREA_TH)
+                if((ms.eliptic.diameter * ms.eliptic.length) < ERR_MEAS_MINAREA_TH)
                     error_mask |= VI_ERR_MEAS2;
 
                 if(error_mask == VI_ERR_OK){
 
-                    double c1d = (ord_st.width / 10.0) / ms.length;
+                    double c1d = (ord_st.width / 10.0) / ms.eliptic.length;
                     t_setup_entry c1; par.ask("calibr-L", &c1);
                     c1.set(c1d);
                     par.replace("calibr-L", c1);
 
                     log += QString("cal-x: ref=%1[mm],pix=%2,ratio=%3\r\n")
                             .arg(ord_st.width)
-                            .arg(ms.length)
-                            .arg(ord_st.width / ms.length);
+                            .arg(ms.eliptic.length)
+                            .arg(ord_st.width / ms.eliptic.length);
 
-                    double c2d = (ord_st.height / 10.0) / ms.diameter;
+                    double c2d = (ord_st.height / 10.0) / ms.eliptic.diameter;
                     t_setup_entry c2; par.ask("calibr-D", &c2);
                     c2.set(c2d);
                     par.replace("calibr-D", c2);
 
                     log += QString("cal-y: ref=%1[mm],pix=%2,ratio=%3\r\n")
                             .arg(ord_st.height)
-                            .arg(ms.diameter)
-                            .arg(ord_st.height / ms.diameter);
+                            .arg(ms.eliptic.diameter)
+                            .arg(ord_st.height / ms.eliptic.diameter);
 
                     __to_file();
                 }
 
                 //potvrdime vysledek - pokud se nepovedlo vratime nejaky error bit + nesmyslne hodnoty mereni width & height
-                t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_CALIBRATE_ACK, error_mask, ms.length, ms.diameter};
+                t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_CALIBRATE_ACK, error_mask, ms.eliptic.length, ms.eliptic.diameter};
                 QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
                 iface.on_write(reply_by);
 
@@ -313,6 +313,7 @@ public slots:
 
         /*! \todo chessboard full calibration */
         //return on_trigger();
+        return 0;
     }
 
 public:

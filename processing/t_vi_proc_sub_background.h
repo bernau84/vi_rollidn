@@ -18,6 +18,7 @@ class t_vi_proc_sub_backgr : public i_proc_stage
 private:
     int bck_lighter_thresh;
     int bck_darker_thresh;
+    QString bpath;
 
 public:
     t_vi_proc_sub_backgr(QString &path =  QString(":/js_config_sub_background.txt")):
@@ -36,7 +37,7 @@ public:
         bpath = QString("back.bmp");
         bpath = par["background"].get().toString();
 
-        qDebug() << "Sub background image / diff-threshold:" << path << thresh;
+        qDebug() << "Sub background image / light-threshold / dark-threshold:" << path << bck_lighter_thresh << bck_darker_thresh;
     }
 
     virtual ~t_vi_proc_sub_backgr(){;}
