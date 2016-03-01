@@ -162,7 +162,9 @@ private:
                 float disty = Y - locations[i].y;
                 float r = sqrt(distx*distx + disty*disty);
 
-                float gama = atan((disty * A) / (distx * B + 1e-6));
+                //! tady pozor - vychazi to z rovnosti ze
+                //! B * cos(gama) / A * sin(gama) == distx / disty
+                float gama = atan((disty * B) / (distx * A + 1e-6));
                 float elipx = cos(gama) * B;
                 float elipy = sin(gama) * A;
                 float R = sqrt(elipx*elipx + elipy*elipy);

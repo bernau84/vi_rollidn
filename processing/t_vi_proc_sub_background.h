@@ -52,6 +52,12 @@ public slots:
         //const char *std_bpath = "c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\back.bmp";
         //const char *std_bpath = "c:\\Users\\bernau84\\Pictures\\trima_daybackground\\trn_bck_exp1_1.bmp";
 
+        if(tsrc.empty()){
+
+            qDebug() << "t_vi_proc_sub_background empty input!";
+            return 0;
+        }
+
         if(p1 == 1){
 
             imwrite(std_bpath, tsrc);

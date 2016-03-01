@@ -49,7 +49,10 @@ enum e_vi_plc_pc_errors {
     VI_ERR_MEAS3 = (1 << 22),
     VI_ERR_MEAS4 = (1 << 23),
     VI_ERR_MEAS5 = (1 << 24),
-    VI_ERR_MEAS6 = (1 << 25)
+    VI_ERR_MEAS6 = (1 << 25),
+    VI_ERR_MEAS7 = (1 << 26),
+    VI_ERR_MEAS8 = (1 << 27),
+    VI_ERR_MEAS9 = (1 << 28)
 };
 
 #pragma pack(push,1)

@@ -114,7 +114,7 @@ private:
         if((th.maxContRect.size.height * th.maxContRect.size.width) < ERR_MEAS_MINAREA_TH){
 
             error_mask |= VI_ERR_MEAS1;  //nepovedlo se zamerit polohu role ve scene
-            log += QString("meas-error: 1(no ROI with roll)");
+            log += QString("meas-error: 1(no ROI with roll)\r\n");
             return;
         }
 
@@ -126,20 +126,43 @@ private:
 
         if((ms.midprof.diameter * ms.midprof.length) < ERR_MEAS_MINAREA_TH){
 
+            log += QString("meas-error: 2(midline unmeasured)\r\n");
             overal_length_err_midline = 1e+6; //bypass - tudle metodu nebrat
             error_mask |= VI_ERR_MEAS2;
-       }
+        }
 
         if((ms.eliptic.diameter * ms.eliptic.length) < ERR_MEAS_MINAREA_TH){
 
+            log += QString("meas-error: 2(eliptic unmeasured)\r\n");
             overal_length_err_elipse = 1e+6; //bypass - tudle metodu nebrat
             error_mask |= VI_ERR_MEAS3;
         }
 
         if((error_mask & VI_ERR_MEAS3) && (error_mask & VI_ERR_MEAS2)){
 
-            log += QString("meas-error: 2+3(unmeasured)");
+            log += QString("meas-error: 2+3(unmeasured)\r\n");
             return; //nepodarilo se odmerit ani jednou metodou - koncime
+        }
+
+        if(overal_length_err_elipse > ms.eliptic.diameter/5){
+
+            log += QString("meas-error: 4(elipse err high)\r\n");
+            error_mask |= VI_ERR_MEAS4;  //warning high diviation
+        }
+
+        if(overal_length_err_midline > ms.midprof.diameter/5){
+
+            log += QString("meas-error: 5(midline err high)\r\n");
+            error_mask |= VI_ERR_MEAS5;  //warning high diviation
+        }
+
+        if(overal_length_err_elipse < overal_length_err_midline){
+
+            log += QString("meas-error: 6(unmeasured)\r\n");
+            error_mask |= VI_ERR_MEAS6;      //fallback to elipse method indication
+
+            raw_diameter = ms.eliptic.diameter;  //elipsy vychazeji lepe - berem je
+            raw_length = ms.eliptic.length + ms.eliptic_left_radius + ms.eliptic_right_radius;
         }
 
         if(overal_length_err_elipse < overal_length_err_midline){
@@ -175,8 +198,11 @@ private:
             mm_length = ratio_l * raw_length;
         } else {
 
-            error_mask |= VI_ERR_MEAS4; //nemame jak udelat prepocet
-            log += QString("meas-error: 4(uncalibred)");
+            mm_diameter = raw_diameter;
+            mm_length = raw_length;
+
+            error_mask |= VI_ERR_MEAS7; //nemame jak udelat prepocet
+            log += QString("meas-error: 7(uncalibred)\r\n");
             return;
         }
 
@@ -204,8 +230,9 @@ public slots:
         t_comm_binary_rollidn ord_st;
         memcpy(&ord_st, raw.data(), sizeof(t_comm_binary_rollidn));
 
-        ord_st.height = __to_rev_endian(ord_st.width);
-        ord_st.width = __to_rev_endian(ord_st.height);
+        ord_st.flags =  __to_rev_endian(ord_st.flags);
+        ord_st.width = __to_rev_endian(ord_st.width);
+        ord_st.height = __to_rev_endian(ord_st.height);
 
         log.clear();
         log += QString("<--rx: ord(%1),flags(0x%2),width(%3),height(%4)\r\n")
@@ -394,7 +421,7 @@ public slots:
                     case -102:  error_mask |= VI_ERR_CAM_EXCEPTION; break;
                 }
 
-                log += QString("cam-error: timeout");
+                log += QString("cam-error: timeout / abort");
                 abort = false;
                 return 0;
             }
@@ -426,7 +453,6 @@ public slots:
         abort = true;
 
         /*! \todo - qloop a cekame na vyhodnoceni (smazani abortu) */
-
         return 1;
     }
 
