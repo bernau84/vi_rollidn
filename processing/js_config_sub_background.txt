@@ -3,6 +3,11 @@
                 "__info": "background bmp file path",
                 "__def": "back.bmp",
         },
+        "background-avr": {
+                "__info": "background moving averaging",
+                "__def": 2,
+                "__min": 1
+        },
         "bck-ligher-threshold": {
                 "__info": "background pixel lighter than this is zeroed",
                 "__def": 32,

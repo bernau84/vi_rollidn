@@ -110,7 +110,7 @@ public:
             {
                 CBaslerUsbInstantCamera::GrabResultPtr_t ptrGrabResultA;
                 camera.GrabOne( 5000, ptrGrabResultA);
-                Pylon::DisplayImage(1, ptrGrabResultA);
+                //Pylon::DisplayImage(1, ptrGrabResultA);
                 ++n;
 
                 prev_exp = exp;

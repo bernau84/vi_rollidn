@@ -442,7 +442,8 @@ public slots:
 
         //process measurement or save new background
         cv::Mat src(info.h, info.w, CV_8UC4, img);
-        bc.proc((background) ? 1 : 0, &src);
+        int order = (background) ? t_vi_proc_sub_backgr::SUBBCK_REFRESH : t_vi_proc_sub_backgr::SUBBCK_SUBSTRACT;
+        bc.proc(order, &src);
 
         delete[] img;
         return 1;

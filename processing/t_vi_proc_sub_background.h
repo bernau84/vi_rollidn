@@ -20,9 +20,19 @@ class t_vi_proc_sub_backgr : public i_proc_stage
 private:
     int bck_lighter_thresh;
     int bck_darker_thresh;
+
     QString bpath;
 
+    int bck_avr;
+    int bck_num;
 public:
+
+    enum t_vi_proc_sub_backgr_ord {
+        SUBBCK_RESET = 0,
+        SUBBCK_REFRESH = 1,
+        SUBBCK_SUBSTRACT = 2
+    };
+
     t_vi_proc_sub_backgr(const QString &path = proc_sub_backgr_defconfigpath):
         i_proc_stage(path)
     {
@@ -34,6 +44,10 @@ public:
         //popredi svetlejsi nez L2 zustava nezmeneno
         bck_darker_thresh = 16;
         bck_darker_thresh = par["bck-darker-threshold"].get().toInt();
+
+        bck_num = 0;
+        bck_avr = 1;
+        bck_avr = par["background-avr"].get().toInt();
 
         //cesta ke snimku pozadi
         bpath = QString("back.bmp");
@@ -47,10 +61,13 @@ public:
 public slots:
     int proc(int p1, void *p2){
 
-        Mat tsrc = *(Mat *)p2;
-        const char *std_bpath = bpath.toLatin1().data();
         //const char *std_bpath = "c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\back.bmp";
         //const char *std_bpath = "c:\\Users\\bernau84\\Pictures\\trima_daybackground\\trn_bck_exp1_1.bmp";
+
+        const char *std_bpath = bpath.toLatin1().data();
+
+        Mat tbck = imread(std_bpath);
+        Mat tsrc = *(Mat *)p2;
 
         if(tsrc.empty()){
 
@@ -58,17 +75,25 @@ public slots:
             return 0;
         }
 
-        if(p1 == 1){
+        switch((t_vi_proc_sub_backgr_ord)p1){
 
-            imwrite(std_bpath, tsrc);
-            return 1;
-        }
+            case SUBBCK_RESET:
 
-        Mat tbck = imread(std_bpath);
-        if(tbck.empty()){
+                bck_num = 0;
+            case SUBBCK_REFRESH:
 
-            emit next(1, &tsrc);
-            return 0;
+                if((bck_num == 0) || (tbck.empty())) tbck = tsrc;
+                    else tbck += (tbck - tsrc)/bck_avr;
+
+                imwrite(std_bpath, tbck);
+                return ++bck_num;
+            default:
+
+                if(tbck.empty()){
+
+                    emit next(1, &tsrc);
+                    return 0;
+                }
         }
 
         //sjednoceni formatu
