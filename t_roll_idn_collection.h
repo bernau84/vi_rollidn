@@ -24,6 +24,7 @@
 #include "t_roll_idn_record_storage.h"
 
 #define ERR_MEAS_MINAREA_TH 100
+#define ERR_MEAS_MAXAREA_TH 1e+6
 
 //global definition of txt remote orders
 extern const char *ords[];
@@ -56,6 +57,8 @@ private:
 
     double mm_diameter;  //last final vaules in mm
     double mm_length;
+    double area_min;    //minimalni plocha role v pixelech, vse pod je chyba
+    double area_max;    //max plocha role v pixelech, vse nad je chyba
 
     //constructor helpers
     QJsonObject __from_file(){
@@ -111,7 +114,7 @@ private:
         mm_diameter = 0;  //signal invalid measurement
         mm_length = 0;
 
-        if((th.maxContRect.size.height * th.maxContRect.size.width) < ERR_MEAS_MINAREA_TH){
+        if((th.maxContRect.size.height * th.maxContRect.size.width) < area_min){
 
             error_mask |= VI_ERR_MEAS1;  //nepovedlo se zamerit polohu role ve scene
             log += QString("meas-error: 1(no ROI with roll)\r\n");
@@ -124,14 +127,14 @@ private:
         int overal_length_err_elipse = ms.eliptic.left_err + ms.eliptic.right_err;
         int overal_length_err_midline = ms.midprof.left_err + ms.midprof.right_err;
 
-        if((ms.midprof.diameter * ms.midprof.length) < ERR_MEAS_MINAREA_TH){
+        if((ms.midprof.diameter * ms.midprof.length) < area_min){
 
             log += QString("meas-error: 2(midline unmeasured)\r\n");
             overal_length_err_midline = 1e+6; //bypass - tudle metodu nebrat
             error_mask |= VI_ERR_MEAS2;
         }
 
-        if((ms.eliptic.diameter * ms.eliptic.length) < ERR_MEAS_MINAREA_TH){
+        if((ms.eliptic.diameter * ms.eliptic.length) < area_min){
 
             log += QString("meas-error: 2(eliptic unmeasured)\r\n");
             overal_length_err_elipse = 1e+6; //bypass - tudle metodu nebrat
@@ -335,10 +338,10 @@ public slots:
 
                 on_calibration();
 
-                if((th.maxContRect.size.height * th.maxContRect.size.width) < ERR_MEAS_MINAREA_TH)
+                if((th.maxContRect.size.height * th.maxContRect.size.width) < area_min)
                     error_mask |= VI_ERR_MEAS1;
 
-                if((ms.eliptic.diameter * ms.eliptic.length) < ERR_MEAS_MINAREA_TH)
+                if((ms.eliptic.diameter * ms.eliptic.length) < area_min)
                     error_mask |= VI_ERR_MEAS2;
 
                 if(error_mask == VI_ERR_OK){
@@ -500,6 +503,12 @@ public:
 
         //z vnejsu vyvolana akce
         QObject::connect(&iface, SIGNAL(order(unsigned, QByteArray)), this, SLOT(on_order(unsigned, QByteArray)));
+
+        if(0 >= (area_min = par["contour_minimal"].get().toDouble()))
+            area_min = ERR_MEAS_MINAREA_TH;
+
+        if(0 >= (area_max = par["contour_maximal"].get().toDouble()))
+            area_max = ERR_MEAS_MAXAREA_TH;
     }
 
     ~t_roll_idn_collection(){

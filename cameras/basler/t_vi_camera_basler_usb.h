@@ -131,6 +131,7 @@ public:
             }
 
             camera.ExposureAuto.SetValue(ExposureAuto_Off);
+            qDebug() << "ExposureAuto done!";
         }
 
         return camera.ExposureTime.GetValue();

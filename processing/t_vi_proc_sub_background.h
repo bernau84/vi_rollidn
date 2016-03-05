@@ -37,23 +37,25 @@ public:
         i_proc_stage(path)
     {
 
+        bck_num = 0;
+
         //pozadi svetlejsi nez L1 je nahrazeno 0
-        bck_lighter_thresh = 32;
-        bck_lighter_thresh = par["bck-ligher-threshold"].get().toInt();
+        if(0 >= (bck_lighter_thresh = par["bck-ligher-threshold"].get().toInt()))
+            bck_lighter_thresh = 32;
 
         //popredi svetlejsi nez L2 zustava nezmeneno
-        bck_darker_thresh = 16;
-        bck_darker_thresh = par["bck-darker-threshold"].get().toInt();
+        if(0 >= (bck_darker_thresh = par["bck-darker-threshold"].get().toInt()))
+            bck_darker_thresh = 16;
 
-        bck_num = 0;
-        bck_avr = 1;
-        bck_avr = par["background-avr"].get().toInt();
+        //prumerovani pozadi
+        if(0 >= (bck_avr = par["background-avr"].get().toInt()))
+            bck_avr = 1;
 
         //cesta ke snimku pozadi
-        bpath = QString("back.bmp");
         bpath = par["background"].get().toString();
+        if(bpath.isEmpty()) bpath = QString("back.bmp");
 
-        qDebug() << "Sub background image / light-threshold / dark-threshold:" << path << bck_lighter_thresh << bck_darker_thresh;
+        qDebug() << "Sub background image / light-threshold / dark-threshold:" << bpath << bck_lighter_thresh << bck_darker_thresh;
     }
 
     virtual ~t_vi_proc_sub_backgr(){;}
@@ -64,42 +66,58 @@ public slots:
         //const char *std_bpath = "c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\back.bmp";
         //const char *std_bpath = "c:\\Users\\bernau84\\Pictures\\trima_daybackground\\trn_bck_exp1_1.bmp";
 
-        const char *std_bpath = bpath.toLatin1().data();
+        QByteArray ba_bpath= bpath.toLatin1();
+        const char *std_bpath = ba_bpath.data();
 
         Mat tbck = imread(std_bpath);
         Mat tsrc = *(Mat *)p2;
+        int tord = (t_vi_proc_sub_backgr_ord)p1;
 
-        if(tsrc.empty()){
+        if(tord == SUBBCK_RESET){
+
+            qDebug() << "t_vi_proc_sub_background averaging reset.";
+            bck_num = 0;
+            return 0;
+        } else if(tsrc.empty()){
 
             qDebug() << "t_vi_proc_sub_background empty input!";
-            return 0;
+            return 0;  //neni co pocitat
         }
 
-        switch((t_vi_proc_sub_backgr_ord)p1){
+        //sjednoceni formatu
+        Mat inp; cvtColor(tsrc, inp, CV_BGR2RGB);
+        Mat bck; //cvtColor(tbck, bck, CV_BGR2RGB);
 
-            case SUBBCK_RESET:
+        switch(tord){
 
-                bck_num = 0;
             case SUBBCK_REFRESH:
 
-                if((bck_num == 0) || (tbck.empty())) tbck = tsrc;
-                    else tbck += (tbck - tsrc)/bck_avr;
+                if((bck_num == 0) || (tbck.empty())){  //nekdo nam smazal pozdi - zacnem prumerovat znovu
 
-                imwrite(std_bpath, tbck);
-                return ++bck_num;
-            default:
+                    bck = inp;
+                } else {
+
+                    cvtColor(tbck, bck, CV_BGR2RGB);  //stejny format jako imp!
+                    bck += (bck - inp)/bck_avr; //pak bude prumerovani fungovat
+                }
+
+                imwrite(std_bpath, bck);
+                return ++bck_num;  //konec signal dal nesirime
+
+            default:  //normalni mode
 
                 if(tbck.empty()){
 
                     emit next(1, &tsrc);
                     return 0;
                 }
+
+                cvtColor(tbck, bck, CV_BGR2RGB);
+                break;
         }
 
-        //sjednoceni formatu
-        Mat bck; cvtColor(tbck, bck, CV_BGR2RGB);
-        Mat imp; cvtColor(tsrc, imp, CV_BGR2RGB);
-        Mat out(imp.rows, imp.cols, CV_8UC3);
+
+        Mat out(inp.rows, inp.cols, CV_8UC3);
 
         int L1 = bck_lighter_thresh;  //pozadi svetlejsi nez L1 je nahrazeno 0
         int L2 = bck_darker_thresh;  //popredi svetlejsi nez L2 zustava nezmeneno
@@ -107,11 +125,11 @@ public slots:
         //substract background and saturate
         //cv::absdiff(imp, bck, out);
 
-        for(int y = 0; y < imp.rows; y++)
-            for(int x = 0; x < imp.cols; x++)
+        for(int y = 0; y < inp.rows; y++)
+            for(int x = 0; x < inp.cols; x++)
                 for(int r=0; r < 3; r++){ //pres barvicky
 
-                    uchar c = imp.at<cv::Vec3b>(y,x)[r];  //mereni
+                    uchar c = inp.at<cv::Vec3b>(y,x)[r];  //mereni
                     uchar b = bck.at<cv::Vec3b>(y,x)[r];  //pozadi
                     int d = (int)c - (int)b; //vysledek
 
