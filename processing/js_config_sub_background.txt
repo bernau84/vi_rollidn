@@ -5,7 +5,7 @@
         },
         "background-avr": {
                 "__info": "background moving averaging",
-                "__def": 2,
+                "__def": 1,
                 "__min": 1
         },
         "bck-ligher-threshold": {

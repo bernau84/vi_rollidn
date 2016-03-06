@@ -92,16 +92,27 @@ public slots:
 
             case SUBBCK_REFRESH:
 
-                if((bck_num == 0) || (tbck.empty())){  //nekdo nam smazal pozdi - zacnem prumerovat znovu
+                //nekdo nam smazal pozdi - zacnem prumerovat znovu
+                //nebo byl zadav externi povel nebo to nema smysl protoze prumerovani je vypnute
+                if((bck_avr < 2) || (bck_num == 0) || (tbck.empty())){
 
                     bck = inp;
                 } else {
 
+                    //todo - nefunguje, svetle plochy postupne saturuji
+                    //otazka jestli to budem moct pouzit s promennou ecpozici
+                    //stejne ne
                     cvtColor(tbck, bck, CV_BGR2RGB);  //stejny format jako imp!
-                    bck += (bck - inp)/bck_avr; //pak bude prumerovani fungovat
+                    Mat dif(inp.rows, inp.cols, CV_32SC3);
+                    Mat sbck(inp.rows, inp.cols, CV_32SC3); sbck = bck;
+                    subtract(sbck, inp, dif);  //rozdil potrebujem znamenkovy
+                    dif /= bck_avr;
+                    sbck += dif; //pak bude prumerovani fungovat
+                    bck = sbck;
                 }
 
                 imwrite(std_bpath, bck);
+                imshow("Backround cummulative", bck);
                 return ++bck_num;  //konec signal dal nesirime
 
             default:  //normalni mode
