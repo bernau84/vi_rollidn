@@ -316,11 +316,8 @@ public slots:
             break;
             case VI_PLC_PC_BACKGROUND:
             {
-
                 error_mask = VI_ERR_OK;
-
-                on_trigger(true); //true == background mode
-                if(error_mask == VI_ERR_OK){
+                if(on_background()){
 
                     //odvysilame vysledek
                     log += QString("-->tx: BACKGROUND_ACK\r\n");
