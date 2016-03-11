@@ -35,6 +35,8 @@ using namespace Basler_UsbCameraParams;
 #error Camera type is not specified. For example, define USE_GIGE for using GigE cameras.
 #endif
 
+#include <QElapsedTimer>
+
 class t_vi_camera_basler_usb : public i_vi_camera_base
 {
 private:
@@ -82,21 +84,48 @@ public:
         return 0;
     }
 
-    //time_us > 0 - set fix vale
-    //0 - continuous
-    //< 0 - once (wait for settling exposition constant to with +/- time_us tolerance)
-    //returns actual exposition
-    int exposure(int time_us){
+    /*! \brief nastavuje a cte expozisni cas
+     * \param[in] time - zalezi na parametru act
+     * \param[in] act
+     *  CAMVAL_ABS - nastavi absolutni hodnotu expozie na time
+     *  CAMVAL_TIMEOUT - nastavi automatiku a cekame time na ustaleni; pokud time == 0 necha ji zapnutou na porad
+     *  CAMVAL_TOLERANCE - nastavi automatiku a cekame na ustaleni v toleranci -/+ time
+     *  CAMVAL_UNDEF - nenastavi nic, jen vycte
+     * */
 
-        if(time_us > 0){
+
+    /*! \todo - merime ne podle celkove expozicni doby ale podle jasu na ROI
+     */
+    int64_t exposure(int64_t time, e_cam_value act = CAMVAL_UNDEF){
+
+        if(act == CAMVAL_ABS){
 
             /*! fixed exposition time */
             /*! \todo use setup property */
-            camera.ExposureTime.SetValue(time_us);
-        } else if(time_us == 0){
+            camera.ExposureTime.SetValue(time);
+        } else if(act == CAMVAL_AUTO_TIMEOUT){
 
             camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
-        } else {
+
+            QElapsedTimer etimer;
+            int prev_exp = 1, exp = 0;
+            for (etimer.start(); timer.elapsed() < time; ) {
+
+                if(prev_exp != exp){
+
+                    CBaslerUsbInstantCamera::GrabResultPtr_t ptrGrabResultA;
+                    camera.GrabOne(5000, ptrGrabResultA);
+
+                    prev_exp = exp;
+                    exp = camera.ExposureTime.GetValue();
+                } else {
+
+                    if(time) camera.ExposureAuto.SetValue(ExposureAuto_Off);
+                    break;
+                }
+            }
+
+        } else if(act == CAMVAL_TOLERANCE) {
 
             camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
 
@@ -105,8 +134,8 @@ public:
             // reaches the target value. After the automatic parameter value adjustment is complete, the auto
             // function will automatically be set to "off", and the new parameter value will be applied to the
             // subsequently grabbed images.
-            int n = 0, prev_exp = 2*time_us, exp = 0;
-            while (abs(exp - prev_exp) > abs(time_us))
+            int n = 0, prev_exp = 2*time, exp = 0;
+            while (abs(exp - prev_exp) > time)
             {
                 CBaslerUsbInstantCamera::GrabResultPtr_t ptrGrabResultA;
                 camera.GrabOne( 5000, ptrGrabResultA);
@@ -127,6 +156,7 @@ public:
                 if (n > 100)
                 {
                     throw RUNTIME_EXCEPTION( "The adjustment of auto exposure did not finish.");
+                    break;
                 }
             }
 

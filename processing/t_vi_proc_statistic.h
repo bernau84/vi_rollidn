@@ -19,13 +19,15 @@ class t_vi_proc_statistic : public i_proc_stage
 private:
     enum t_vi_proc_statistic_ord {
         STATISTIC_NONE = 0,
-        STATISTIC_MEAN,
-        STATISTIC_LUMINANCE,
-        STATISTIC_HIST_X,
-        STATISTIC_HIST_Y,
+        STATISTIC_MEAN,     //mean vale over all pixels and channels
+        STATISTIC_BRIGHTNESS,  //color channel weighted mean
+        STATISTIC_HIST_X,   //todo
+        STATISTIC_HIST_Y,   //todo
     };
 
 public:
+    cv::Mat out;
+
     t_vi_proc_statistic(const QString &path = proc_colortransf_defconfigpath):
         i_proc_stage(path)
     {
@@ -50,14 +52,31 @@ public slots:
         switch(ord){
 
             case STATISTIC_MEAN:
-
+            {
                 float res = 0.0;
                 out = Mat(1, 1, CV_32FC1);
                 cv::Scalar tres = cv::mean(*src);
                 for(int i=0; i<tres.channels; i++)
                     res += tres[i];
 
-                out << res/tres.channels;
+                out << (res / tres.channels);
+            }
+            break;
+            /*! assumes RGB or Mono picture format */
+            case STATISTIC_BRIGHTNESS:
+            {
+                float res = 0.0;
+                out = Mat(1, 1, CV_32FC1);
+                cv::Scalar tres = cv::mean(*src);
+
+                float weights[3] = {0.299, 0.587, 0.144};  //0.299*R + 0.587*G + 0.144*B
+
+                if(tres.channels == 1)
+                    res = tres[0];
+                else if(tres.channels == 3)
+                    for(int i=0; i<3; i++)
+                        res += tres[i] * weights;
+            }
             break;
             default:
             break;

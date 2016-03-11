@@ -9,6 +9,8 @@
 
 using namespace std;
 
+
+
 class i_vi_camera_base {
 
 public:
@@ -19,6 +21,16 @@ public:
         CAMSTA_INPROC,
         CAMSTA_ERROR
     } sta;
+
+    /*! tyka se metody exposition()
+     */
+    enum e_cam_value {
+
+        CAMVAL_UNDEF = 0,
+        CAMVAL_ABS = 1,
+        CAMVAL_AUTO_TOLERANCE,
+        CAMVAL_AUTO_TIMEOUT
+    };
 
     struct t_campic_info {
 
@@ -90,6 +102,12 @@ protected:
 public:
     /*! \brief before fist grab / for reset do original state */
     virtual int init(){
+
+        return 0;
+    }
+
+    /*! \brief exposition control */
+    virtual int64_t exposition(int64_t time, e_cam_value act = CAMVAL_UNDEF){
 
         return 0;
     }

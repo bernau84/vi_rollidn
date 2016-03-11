@@ -43,6 +43,7 @@ enum e_vi_plc_pc_errors {
     VI_ERR_CAM_BADPICT = (1 << 13),
     VI_ERR_CAM_EXCEPTION = (1 << 14),
     VI_ERR_CAM_SNAPERR = (1 << 15),
+    VI_ERR_CAM_EXPOSITION = (1 << 16),
 
     VI_ERR_MEAS1 = (1 << 20),
     VI_ERR_MEAS2 = (1 << 21),

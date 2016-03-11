@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QEventLoop>
-#include <QtEndian>
 
 #include <stdio.h>
 
@@ -18,6 +17,7 @@
 #include "processing/t_vi_proc_threshold_cont.h"
 #include "processing/t_vi_proc_roll_approx.h"
 #include "processing/t_vi_proc_sub_background.h"
+#include "processing/t_vi_proc_statistic.h"
 
 #include "t_vi_setup.h"
 #include "t_vi_specification.h"
@@ -50,6 +50,7 @@ private:
     t_vi_proc_threshold th;
     t_vi_proc_roll_approx ms;
     t_vi_proc_sub_backgr bc;
+    t_vi_proc_statistic st;
 
     t_comm_tcp_rollidn iface;
 
@@ -59,7 +60,12 @@ private:
     double mm_length;
     double area_min;    //minimalni plocha role v pixelech, vse pod je chyba
     double area_max;    //max plocha role v pixelech, vse nad je chyba
-    double ref_luminance;   //referencni jas odecteny po ustaleni atoexpozice
+
+    float ref0_luminance;   //referencni jas odecteny po ustaleni atoexpozice
+    float ref1_luminance;   //referencni jas odecteny po ustaleni atoexpozice - minuly
+    float act_luminance;   //jas posledniho snimku
+
+    uint64_t exposition;  //aktualni hodnota expozice
 
     //constructor helpers
     QJsonObject __from_file(){
@@ -313,21 +319,19 @@ public slots:
 
                 error_mask = VI_ERR_OK;
 
-                if(cam_device.sta != i_vi_camera_base::CAMSTA_PREPARED)
-                    error_mask |= VI_ERR_CAM_NOTFOUND;
-                else if(cam_device.exposure(-100)){ //100us tolerance to settling exposure
+                on_trigger(true); //true == background mode
+                if(error_mask == VI_ERR_OK){
 
-                    on_trigger(true); //true == background mode
-                    if(error_mask == VI_ERR_OK){
+                    float dif_luminance = act_luminance - ref_luminance;
+                    if(fabs(dif_luminance) > sign_dlum)
 
-                    }
+                    //odvysilame vysledek
+                    log += QString("-->tx: BACKGROUND_ACK\r\n");
+                    t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_BACKGROUND_ACK,
+                                                      __to_rev_endian(error_mask), 0, 0};
+                    QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
+                    iface.on_write(reply_by);
                 }
-                //odvysilame vysledek
-                log += QString("-->tx: BACKGROUND_ACK\r\n");
-                t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_BACKGROUND_ACK,
-                                                  __to_rev_endian(error_mask), 0, 0};
-                QByteArray reply_by((const char *)&reply_st, sizeof(t_comm_binary_rollidn));
-                iface.on_write(reply_by);
             }
             break;
             case VI_PLC_PC_CALIBRATE:
@@ -449,6 +453,10 @@ public slots:
         int order = (background) ? t_vi_proc_sub_backgr::SUBBCK_REFRESH : t_vi_proc_sub_backgr::SUBBCK_SUBSTRACT;
         bc.proc(order, &src);
 
+        //calc average brightness
+        st.proc(t_vi_proc_statistic::STATISTIC_BRIGHTNESS, &src);
+        act_luminance = st.out.at<float>(0); //extract luminance from output matrix
+
         delete[] img;
         return 1;
     }
@@ -464,26 +472,73 @@ public slots:
     int on_ready(){
 
         //zafixujeme nastaveni expozice a ulozime si referencni hodnotu jasu
-        if(ref_luminance < 0){
+        if(ref0_luminance < 0){
 
-            if(cam_device.sta != i_vi_camera_base::CAMSTA_PREPARED)
+            if(cam_device.sta != i_vi_camera_base::CAMSTA_PREPARED){
+
                 error_mask |= VI_ERR_CAM_NOTFOUND;
-            else if(cam_device.exposure(-100)){ //100us tolerance to settling exposure
+            } else if(cam_device.exposure(100, t_vi_camera_basler_usb::CAMVAL_AUTO_TOLERANCE)){ //100us tolerance to settling exposure
 
                 on_trigger(true); //true == background mode
                 if(error_mask == VI_ERR_OK){
 
+                    ref1_luminance = ref0_luminance = act_luminance;
+                    return 1;
                 }
+            } else {
+
+                error_mask |= VI_ERR_CAM_EXPOSITION;  //autoexpozice failovala
             }
         }
 
-        /*! \todo - vyhodnotit stav - mame zkalibravano nebo ne; inicializace a nastaveni chyb */
-        return 1;
+        return 0;
+    }
+
+    int on_background(){
+
+        bool mode = true; //false - bez noveho pozadi
+
+        exposition = cam_device.exposure(0, t_vi_camera_basler_usb::CAMVAL_UNDEF);
+
+        float dif_luminance = ref0_luminance - ref1_luminance;
+        if((dif_luminance > 0) && (fabs(dif_luminance) > 255 * 0.05)){ //zmena o pet procent
+
+            mode = true;    //budem chti novy snime pozadi
+            exposition = cam_device.exposure(exposition / 1.05, t_vi_camera_basler_usb::CAMVAL_ABS); //expozici dolu o 5procent
+        } else if((dif_luminance < 0) && (fabs(dif_luminance) > 255 * 0.05)){
+
+            mode = true;    //budem chti novy snime pozadi
+            exposition = cam_device.exposure(exposition * 1.05, t_vi_camera_basler_usb::CAMVAL_ABS); //expozici o 5procent nahoru
+        }
+
+        on_trigger(mode); //true == background mode
+        if(error_mask == VI_ERR_OK){
+
+            ref1_luminance = ref0_luminance;
+            ref0_luminance = act_luminance;
+            return 1;
+        }
+
+        return 0;
     }
 
     int on_calibration(){
 
         return on_trigger();
+    }
+
+signals:
+    void next(int p1, void *p2);
+
+public slots:
+
+    int intercept(int p1, void *p2){
+
+        /*! place some data manipulation between
+         * two t_vi_proc_* stages
+         */
+
+        emit next(p1, p2);
     }
 
 public:
@@ -514,6 +569,10 @@ public:
         QObject::connect(&ct, SIGNAL(next(int, void *)), &th, SLOT(proc(int, void *)));
         QObject::connect(&th, SIGNAL(next(int, void *)), &ms, SLOT(proc(int, void *)));
 
+        /*! pokud je potreba je mozne mezi analyzy vstoupit slotem intercept(int, void *)
+         * tohoto obektu a pomoci toho treba runtime menit parametry
+         */
+
         /*! \todo - navazat vystupem ms na ulozeni vysledku analyzy (obrazek) */
 
         //z vnejsu vyvolana akce
@@ -525,7 +584,7 @@ public:
         if(0 >= (area_max = par["contour_maximal"].get().toDouble()))
             area_max = ERR_MEAS_MAXAREA_TH;
 
-        ref_luminance = -1;  //indikuje ze nebylo dosud provedeno
+        ref1_luminance = ref0_luminance = -1;  //indikuje ze nebylo dosud provedeno
     }
 
     ~t_roll_idn_collection(){
