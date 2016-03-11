@@ -322,9 +322,6 @@ public slots:
                 on_trigger(true); //true == background mode
                 if(error_mask == VI_ERR_OK){
 
-                    float dif_luminance = act_luminance - ref_luminance;
-                    if(fabs(dif_luminance) > sign_dlum)
-
                     //odvysilame vysledek
                     log += QString("-->tx: BACKGROUND_ACK\r\n");
                     t_comm_binary_rollidn reply_st = {(uint16_t)VI_PLC_PC_BACKGROUND_ACK,
@@ -539,6 +536,7 @@ public slots:
          */
 
         emit next(p1, p2);
+        return 1;
     }
 
 public:

@@ -275,7 +275,9 @@ public:
 
 public slots:
     int reload(int p){
+
         p = p;
+        return 1;
     }
 
     int proc(int p1, void *p2){

@@ -43,7 +43,9 @@ public:
     virtual ~t_vi_proc_sub_backgr(){;}
 
 public slots:
-    int reload(){
+    int reload(int p){
+
+        p = p;
 
         bck_num = 0;
 
@@ -62,6 +64,8 @@ public slots:
         //cesta ke snimku pozadi
         bpath = par["background"].get().toString();
         if(bpath.isEmpty()) bpath = QString("back.bmp");
+
+        return 1;
     }
 
     int proc(int p1, void *p2){

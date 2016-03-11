@@ -51,6 +51,8 @@ public slots:
 
         if(0 > (min_contour_area = par["contour_minimal"].get().toInt()))
             min_contour_area = 100;
+
+        return 1;
     }
 
     int proc(int p1, void *p2){

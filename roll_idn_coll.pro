@@ -43,9 +43,6 @@ DISTFILES += \
 HEADERS += \
     cameras/i_camera_base.h \
     cameras/t_camera_attrib.h \
-    processing/i_proc_stage.h \
-    processing/t_vi_proc_roll_approx.h \
-    processing/t_vi_proc_threshold_cont.h \
     t_vi_setup.h \
     cameras/basler/t_vi_camera_basler_usb.h \
     cameras/offline/t_vi_camera_offline_file.h \
@@ -62,7 +59,10 @@ HEADERS += \
     processing/t_vi_proc_sub_background.h \
     processing/t_vi_proc_roi_colortransf.h \
     processing/t_vi_proc_rectification.h \
-    processing/t_vi_proc_statistic.h
+    processing/t_vi_proc_statistic.h \
+    processing/i_proc_stage.h \
+    processing/t_vi_proc_roll_approx.h \
+    processing/t_vi_proc_threshold_cont.h
 
 DEFINES += USE_USB
 

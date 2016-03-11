@@ -46,13 +46,14 @@ public slots:
 
         if(0 > (cvt = par["color-transf"].get().toInt()))
             cvt = CV_BGR2GRAY;
+
+        return 1;
     }
 
     int proc(int p1, void *p2){
 
         int t_cvt = (p1 != 0) ? p1 : cvt;
         Mat *src = (Mat *)p2;
-
 
         ///Convert image to gray
         cv::cvtColor(*src, out, t_cvt/*CV_BGR2GRAY*/);

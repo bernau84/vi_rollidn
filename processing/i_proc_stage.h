@@ -47,7 +47,7 @@ signals:
 public:
     //read / update config parameter runtime
     //new value is not promoted to json file
-    QVariant config(QString &name, QVarinat *value){
+    QVariant config(QString &name, QVariant *value){
 
         if(!par.ask(name))
             return QVariant();
@@ -57,7 +57,7 @@ public:
             QJsonValue jval_set = QJsonValue::fromVariant(*value);
             QJsonValue jval_get = par[name].set(jval_set);
 
-            reload();
+            reload(0);
 
             return jval_get.toVariant();
         }

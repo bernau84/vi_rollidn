@@ -109,7 +109,7 @@ public:
 
             QElapsedTimer etimer;
             int prev_exp = 1, exp = 0;
-            for (etimer.start(); timer.elapsed() < time; ) {
+            for (etimer.start(); etimer.elapsed() < time; ) {
 
                 if(prev_exp != exp){
 
@@ -125,7 +125,7 @@ public:
                 }
             }
 
-        } else if(act == CAMVAL_TOLERANCE) {
+        } else if(act == CAMVAL_AUTO_TOLERANCE) {
 
             camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
 

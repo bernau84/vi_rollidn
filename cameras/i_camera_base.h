@@ -109,6 +109,8 @@ public:
     /*! \brief exposition control */
     virtual int64_t exposition(int64_t time, e_cam_value act = CAMVAL_UNDEF){
 
+        Q_UNUSED(time)
+        Q_UNUSED(act)
         return 0;
     }
 

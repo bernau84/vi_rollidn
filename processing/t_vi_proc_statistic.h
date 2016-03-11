@@ -17,6 +17,9 @@ static const QString proc_statistic_defconfigpath(":/js_config_statistic.txt");
 class t_vi_proc_statistic : public i_proc_stage
 {
 private:
+
+public:
+
     enum t_vi_proc_statistic_ord {
         STATISTIC_NONE = 0,
         STATISTIC_MEAN,     //mean vale over all pixels and channels
@@ -25,7 +28,6 @@ private:
         STATISTIC_HIST_Y,   //todo
     };
 
-public:
     cv::Mat out;
 
     t_vi_proc_statistic(const QString &path = proc_colortransf_defconfigpath):
@@ -42,6 +44,7 @@ public slots:
     int reload(int p){
 
         p = p;
+        return 1;
     }
 
     int proc(int p1, void *p2){
@@ -59,7 +62,7 @@ public slots:
                 for(int i=0; i<tres.channels; i++)
                     res += tres[i];
 
-                out << (res / tres.channels);
+                out.at<float>(0) = float(res/tres.channels);
             }
             break;
             /*! assumes RGB or Mono picture format */
@@ -69,13 +72,15 @@ public slots:
                 out = Mat(1, 1, CV_32FC1);
                 cv::Scalar tres = cv::mean(*src);
 
-                float weights[3] = {0.299, 0.587, 0.144};  //0.299*R + 0.587*G + 0.144*B
+                double weights[3] = {0.299, 0.587, 0.144};  //0.299*R + 0.587*G + 0.144*B
 
                 if(tres.channels == 1)
                     res = tres[0];
                 else if(tres.channels == 3)
                     for(int i=0; i<3; i++)
-                        res += tres[i] * weights;
+                        res += tres[i] * weights[i];
+
+                out.at<float>(0) = float(res/tres.channels);
             }
             break;
             default:
