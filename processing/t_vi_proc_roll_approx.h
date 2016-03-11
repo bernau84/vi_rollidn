@@ -31,10 +31,10 @@ public:
     float eliptic_left_radius;  //doplnkova informace
     float eliptic_right_radius;
 
-private:
-
     Mat out;
     Mat loc;  //pro vizualizaci na cmarani
+
+private:
 
     Vec4f linear_approx(int from, int to, float *err = NULL){
 
