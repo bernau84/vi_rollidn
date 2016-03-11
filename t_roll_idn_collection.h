@@ -12,6 +12,7 @@
 
 #include "cinterface/i_comm_generic.h"
 #include "cameras/basler/t_vi_camera_basler_usb.h"
+#include "cameras/basler/t_vi_camera_basler_gige.h"
 #include "cameras/offline/t_vi_camera_offline_file.h"
 #include "processing/t_vi_proc_roi_colortransf.h"
 #include "processing/t_vi_proc_threshold_cont.h"
@@ -42,8 +43,12 @@ private:
     t_collection par;
     bool abort;
     uint32_t error_mask;  //suma flagu e_vi_plc_pc_errors
-
+#ifdef USE_USB
     t_vi_camera_basler_usb cam_device;
+#elif defined USE_GIGE
+    t_vi_camera_basler_gige cam_device;
+#endif //USE_XXX
+
     t_vi_camera_offline_file cam_simul;
 
     t_vi_proc_colortransf ct;
@@ -471,7 +476,7 @@ public slots:
             if(cam_device.sta != i_vi_camera_base::CAMSTA_PREPARED){
 
                 error_mask |= VI_ERR_CAM_NOTFOUND;
-            } else if(cam_device.exposure(100, t_vi_camera_basler_usb::CAMVAL_AUTO_TOLERANCE)){ //100us tolerance to settling exposure
+            } else if(cam_device.exposure(100, i_vi_camera_base::CAMVAL_AUTO_TOLERANCE)){ //100us tolerance to settling exposure
 
                 on_trigger(true); //true == background mode
                 if(error_mask == VI_ERR_OK){
@@ -492,17 +497,17 @@ public slots:
 
         bool mode = true; //false - bez noveho pozadi
 
-        exposition = cam_device.exposure(0, t_vi_camera_basler_usb::CAMVAL_UNDEF);
+        exposition = cam_device.exposure(0, i_vi_camera_base::CAMVAL_UNDEF);
 
         float dif_luminance = ref0_luminance - ref1_luminance;
         if((dif_luminance > 0) && (fabs(dif_luminance) > 255 * 0.05)){ //zmena o pet procent
 
             mode = true;    //budem chti novy snime pozadi
-            exposition = cam_device.exposure(exposition / 1.05, t_vi_camera_basler_usb::CAMVAL_ABS); //expozici dolu o 5procent
+            exposition = cam_device.exposure(exposition / 1.05, i_vi_camera_base::CAMVAL_ABS); //expozici dolu o 5procent
         } else if((dif_luminance < 0) && (fabs(dif_luminance) > 255 * 0.05)){
 
             mode = true;    //budem chti novy snime pozadi
-            exposition = cam_device.exposure(exposition * 1.05, t_vi_camera_basler_usb::CAMVAL_ABS); //expozici o 5procent nahoru
+            exposition = cam_device.exposure(exposition * 1.05, i_vi_camera_base::CAMVAL_ABS); //expozici o 5procent nahoru
         }
 
         on_trigger(mode); //true == background mode

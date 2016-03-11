@@ -62,9 +62,11 @@ HEADERS += \
     processing/t_vi_proc_statistic.h \
     processing/i_proc_stage.h \
     processing/t_vi_proc_roll_approx.h \
-    processing/t_vi_proc_threshold_cont.h
+    processing/t_vi_proc_threshold_cont.h \
+    cameras/basler/t_vi_camera_basler_gige.h
 
-DEFINES += USE_USB
+#DEFINES += USE_USB
+DEFINES += USE_GIGE
 
 RESOURCES += \
     processing/defaults.qrc

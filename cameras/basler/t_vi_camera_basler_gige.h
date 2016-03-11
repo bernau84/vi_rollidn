@@ -1,5 +1,5 @@
-#if (!defined T_VI_CAMERA_BASLER_USB_H && defined USE_USB)
-#define T_VI_CAMERA_BASLER_USB_H
+#if (!defined T_VI_CAMERA_BASLER_GIGE && defined USE_GIGE)
+#define T_VI_CAMERA_BASLER_GIGE
 
 #include "../i_camera_base.h"
 
@@ -30,6 +30,7 @@ using namespace Basler_CLCameraParams;
 #elif defined ( USE_USB )
 // Setting for using Basler USB cameras.
 #include <pylon/usb/BaslerUsbInstantCamera.h>
+typedef Pylon::CBaslerUsbInstantCamera Camera_t;
 using namespace Basler_UsbCameraParams;
 #else
 #error Camera type is not specified. For example, define USE_GIGE for using GigE cameras.
@@ -37,10 +38,10 @@ using namespace Basler_UsbCameraParams;
 
 #include <QElapsedTimer>
 
-class t_vi_camera_basler_usb : public i_vi_camera_base
+class t_vi_camera_basler_gige : public i_vi_camera_base
 {
 private:
-    CBaslerUsbInstantCamera camera;
+    Camera_t camera;
 
     // Automagically call PylonInitialize and PylonTerminate to ensure the pylon runtime system
     // is initialized during the lifetime of this object.
@@ -102,7 +103,7 @@ public:
 
             /*! fixed exposition time */
             /*! \todo use setup property */
-            camera.ExposureTime.SetValue(time);
+            camera.ExposureTimeAbs.SetValue(time);
         } else if(act == CAMVAL_AUTO_TIMEOUT){
 
             camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
@@ -113,11 +114,11 @@ public:
 
                 if(prev_exp != exp){
 
-                    CBaslerUsbInstantCamera::GrabResultPtr_t ptrGrabResultA;
+                    CBaslerGigEInstantCamera::GrabResultPtr_t ptrGrabResultA;
                     camera.GrabOne(5000, ptrGrabResultA);
 
                     prev_exp = exp;
-                    exp = camera.ExposureTime.GetValue();
+                    exp = camera.ExposureTimeAbs.GetValue();
                 } else {
 
                     if(time) camera.ExposureAuto.SetValue(ExposureAuto_Off);
@@ -137,13 +138,13 @@ public:
             int n = 0, prev_exp = 2*time, exp = 0;
             while (abs(exp - prev_exp) > time)
             {
-                CBaslerUsbInstantCamera::GrabResultPtr_t ptrGrabResultA;
+                CBaslerGigEInstantCamera::GrabResultPtr_t ptrGrabResultA;
                 camera.GrabOne( 5000, ptrGrabResultA);
                 //Pylon::DisplayImage(1, ptrGrabResultA);
                 ++n;
 
                 prev_exp = exp;
-                exp = camera.ExposureTime.GetValue();
+                exp = camera.ExposureTimeAbs.GetValue();
 
                 //For demonstration purposes only. Wait until the image is shown.
                 ::Sleep(100);
@@ -164,7 +165,7 @@ public:
             qDebug() << "ExposureAuto done!";
         }
 
-        return camera.ExposureTime.GetValue();
+        return camera.ExposureTimeAbs.GetValue();
     }
 
     int snap(void *img, unsigned free, t_campic_info *info = NULL){
@@ -232,20 +233,21 @@ public:
         return 0;
     }
 
-    t_vi_camera_basler_usb(const QString &path):
+    t_vi_camera_basler_gige(const QString &path):
         i_vi_camera_base(path),
         camera()
     {
 
     }
 
-    t_vi_camera_basler_usb():
+    t_vi_camera_basler_gige():
         camera()
     {
 
     }
 
-    ~t_vi_camera_basler_usb(){;}
+    ~t_vi_camera_basler_gige(){;}
 };
 
-#endif // T_VI_CAMERA_BASLER_USB_H
+#endif // T_VI_CAMERA_BASLER_GIGE
+
