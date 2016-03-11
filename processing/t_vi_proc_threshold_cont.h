@@ -30,14 +30,7 @@ public:
     t_vi_proc_threshold(const QString &path = proc_threshold_defconfigpath):
         i_proc_stage(path)
     {
-        thresh = 90;    /*! \todo - from collection */
-        max_thresh = 255;
-        min_contour_area = 100;
-
-        thresh = par["threshold_positive"].get().toInt();
-        max_thresh = par["threshold_binaryval"].get().toInt();
-        min_contour_area = par["contour_minimal"].get().toInt();
-
+        reload(0);
         qDebug() << "Threshold & contours setup:" << thresh << max_thresh << min_contour_area;
     }
 
@@ -45,6 +38,21 @@ public:
     virtual ~t_vi_proc_threshold(){;}
 
 public slots:
+
+    int reload(int p){
+
+        p = p;
+
+        if(0 > (thresh = par["threshold_positive"].get().toInt()))
+            thresh = 90;
+
+        if(0 > (max_thresh = par["threshold_binaryval"].get().toInt()))
+            max_thresh = 255;
+
+        if(0 > (min_contour_area = par["contour_minimal"].get().toInt()))
+            min_contour_area = 100;
+    }
+
     int proc(int p1, void *p2){
 
         p1 = p1;

@@ -36,6 +36,14 @@ public:
     t_vi_proc_sub_backgr(const QString &path = proc_sub_backgr_defconfigpath):
         i_proc_stage(path)
     {
+        reload(0);
+        qDebug() << "Sub background image / light-threshold / dark-threshold:" << bpath << bck_lighter_thresh << bck_darker_thresh;
+    }
+
+    virtual ~t_vi_proc_sub_backgr(){;}
+
+public slots:
+    int reload(){
 
         bck_num = 0;
 
@@ -54,13 +62,8 @@ public:
         //cesta ke snimku pozadi
         bpath = par["background"].get().toString();
         if(bpath.isEmpty()) bpath = QString("back.bmp");
-
-        qDebug() << "Sub background image / light-threshold / dark-threshold:" << bpath << bck_lighter_thresh << bck_darker_thresh;
     }
 
-    virtual ~t_vi_proc_sub_backgr(){;}
-
-public slots:
     int proc(int p1, void *p2){
 
         //const char *std_bpath = "c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\back.bmp";

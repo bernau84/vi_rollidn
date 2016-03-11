@@ -36,12 +36,34 @@ protected:
    t_collection par;
 
 public slots:
-    virtual int proc(int p1, void *p2) = 0;
+   //data processor
+   virtual int proc(int p1, void *p2) = 0;
+   //init privtaes from configuration
+   virtual int reload(int p) = 0;
 
 signals:
     void next(int p1, void *p2);
 
 public:
+    //read / update config parameter runtime
+    //new value is not promoted to json file
+    QVariant config(QString &name, QVarinat *value){
+
+        if(!par.ask(name))
+            return QVariant();
+
+        if(value){
+
+            QJsonValue jval_set = QJsonValue::fromVariant(*value);
+            QJsonValue jval_get = par[name].set(jval_set);
+
+            reload();
+
+            return jval_get.toVariant();
+        }
+
+        return par[name].get().toVariant();
+    }
 
     i_proc_stage(const QString &js_config, QObject *parent = NULL):
         QObject(parent),

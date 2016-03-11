@@ -17,32 +17,45 @@ class t_vi_proc_colortransf : public i_proc_stage
 private:
     Mat out;
     cv::Rect roi;
+    int cvt;
 
 public:
     t_vi_proc_colortransf(const QString &path = proc_colortransf_defconfigpath):
         i_proc_stage(path)
     {
-        roi.x = roi.y = roi.width = roi.height = 0;
+        reload(0);
 
-        roi.x = par["ROI-centerX"].get().toInt();   //from collection
-        roi.y = par["ROI-centerY"].get().toInt();
-        roi.width = par["ROI-width"].get().toInt();
-        roi.height = par["ROI-height"].get().toInt();
-
-        qDebug() << "ColorTr & ROI import setup:" << roi.x << roi.y << roi.width << roi.height;
+        qDebug() << "ColorTr & ROI import setup:" << cvt << roi.x << roi.y << roi.width << roi.height;
     }
 
 
     virtual ~t_vi_proc_colortransf(){;}
 
 public slots:
+
+    int reload(int p){
+
+        p = p;
+
+        roi.x = roi.y = roi.width = roi.height = 0;
+
+        roi.x = par["roi-center-x"].get().toInt();   //from collection
+        roi.y = par["roi-center-y"].get().toInt();
+        roi.width = par["roi-width"].get().toInt();
+        roi.height = par["roi-height"].get().toInt();
+
+        if(0 > (cvt = par["color-transf"].get().toInt()))
+            cvt = CV_BGR2GRAY;
+    }
+
     int proc(int p1, void *p2){
 
-        p1 = p1;
+        int t_cvt = (p1 != 0) ? p1 : cvt;
         Mat *src = (Mat *)p2;
 
+
         ///Convert image to gray
-        cv::cvtColor(*src, out, CV_BGR2GRAY);
+        cv::cvtColor(*src, out, t_cvt/*CV_BGR2GRAY*/);
 
         ///ROI
         if(roi.width && roi.height){

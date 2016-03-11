@@ -14,7 +14,7 @@
 #include "cinterface/i_comm_generic.h"
 #include "cameras/basler/t_vi_camera_basler_usb.h"
 #include "cameras/offline/t_vi_camera_offline_file.h"
-#include "processing/t_vi_proc_roi_grayscale.h"
+#include "processing/t_vi_proc_roi_colortransf.h"
 #include "processing/t_vi_proc_threshold_cont.h"
 #include "processing/t_vi_proc_roll_approx.h"
 #include "processing/t_vi_proc_sub_background.h"
@@ -59,6 +59,7 @@ private:
     double mm_length;
     double area_min;    //minimalni plocha role v pixelech, vse pod je chyba
     double area_max;    //max plocha role v pixelech, vse nad je chyba
+    double ref_luminance;   //referencni jas odecteny po ustaleni atoexpozice
 
     //constructor helpers
     QJsonObject __from_file(){
@@ -462,6 +463,20 @@ public slots:
 
     int on_ready(){
 
+        //zafixujeme nastaveni expozice a ulozime si referencni hodnotu jasu
+        if(ref_luminance < 0){
+
+            if(cam_device.sta != i_vi_camera_base::CAMSTA_PREPARED)
+                error_mask |= VI_ERR_CAM_NOTFOUND;
+            else if(cam_device.exposure(-100)){ //100us tolerance to settling exposure
+
+                on_trigger(true); //true == background mode
+                if(error_mask == VI_ERR_OK){
+
+                }
+            }
+        }
+
         /*! \todo - vyhodnotit stav - mame zkalibravano nebo ne; inicializace a nastaveni chyb */
         return 1;
     }
@@ -509,6 +524,8 @@ public:
 
         if(0 >= (area_max = par["contour_maximal"].get().toDouble()))
             area_max = ERR_MEAS_MAXAREA_TH;
+
+        ref_luminance = -1;  //indikuje ze nebylo dosud provedeno
     }
 
     ~t_roll_idn_collection(){

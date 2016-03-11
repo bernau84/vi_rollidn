@@ -38,13 +38,12 @@ DISTFILES += \
     processing/js_config_roi_colortransf.txt \
     processing/js_config_threshold_cont.txt \
     js_config_collection_all.txt \
-    processing/js_config_rectify
+    processing/js_config_rectification.txt
 
 HEADERS += \
     cameras/i_camera_base.h \
     cameras/t_camera_attrib.h \
     processing/i_proc_stage.h \
-    processing/t_vi_proc_roi_grayscale.h \
     processing/t_vi_proc_roll_approx.h \
     processing/t_vi_proc_threshold_cont.h \
     t_vi_setup.h \
@@ -61,7 +60,9 @@ HEADERS += \
     cinterface/tcp_uni/t_comm_tcp_uni.h \
     mainwindow.h \
     processing/t_vi_proc_sub_background.h \
-    processing/t_vi_proc_rectify.h
+    processing/t_vi_proc_roi_colortransf.h \
+    processing/t_vi_proc_rectification.h \
+    processing/t_vi_proc_statistic.h
 
 DEFINES += USE_USB
 

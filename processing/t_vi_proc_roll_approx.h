@@ -267,12 +267,17 @@ public:
     t_vi_proc_roll_approx(const QString &path = proc_roll_approx_defconfigpath):
         i_proc_stage(path)
     {
+        reload(0);
     }
 
 
     virtual ~t_vi_proc_roll_approx(){;}
 
 public slots:
+    int reload(int p){
+        p = p;
+    }
+
     int proc(int p1, void *p2){
 
         memset(&eliptic, 0, sizeof(t_vi_proc_roll_ind_res));
