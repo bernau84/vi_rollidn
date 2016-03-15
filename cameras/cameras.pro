@@ -34,9 +34,11 @@ HEADERS += \
     ../t_vi_setup.h \
     basler/t_vi_camera_basler_usb.h \
     offline/t_vi_camera_offline_file.h \
-    usbweb/t_vi_camera_web_usb.h
+    usbweb/t_vi_camera_web_usb.h \
+    basler/t_vi_camera_basler_gige.h
 
 DISTFILES += \
     js_camera_base.txt
 
-DEFINES += USE_USB
+#DEFINES += USE_USB
+DEFINES += USE_GIGE

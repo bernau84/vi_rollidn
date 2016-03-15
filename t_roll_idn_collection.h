@@ -453,8 +453,8 @@ public slots:
         bc.proc(order, &src);
 
         //calc average brightness
-        st.proc(t_vi_proc_statistic::STATISTIC_BRIGHTNESS, &src);
-        act_luminance = st.out.at<float>(0); //extract luminance from output matrix
+        //st.proc(t_vi_proc_statistic::STATISTIC_BRIGHTNESS, &src);
+        //act_luminance = st.out.at<float>(0); //extract luminance from output matrix
 
         delete[] img;
         return 1;

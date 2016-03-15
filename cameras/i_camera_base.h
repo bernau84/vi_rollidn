@@ -84,7 +84,7 @@ protected:
             memcpy(img, dest_p, ret);
         }
 
-        /*! \todo - anotrher transformation postprocess
+        /*! \todo - anotrher transformation postprocessb
          * roi & contrast etc according to manual settup (if choosen)
          */
 

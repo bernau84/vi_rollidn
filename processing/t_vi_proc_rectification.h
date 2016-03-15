@@ -47,7 +47,20 @@ public slots:
         p1 = p1;
         Mat *src = (Mat *)p2;
 
+        Mat cameraMatrix = Mat::eye(3, 3, CV_64F);
+        Mat distCoeffs = Mat::zeros(8, 1, CV_64F);
 
+        cameraMatrix.at<double>(0,0) = cam_param[0].toDouble(); //fx
+        cameraMatrix.at<double>(1,1) = cam_param[4].toDouble(); //fy
+        cameraMatrix.at<double>(2,0) = cam_param[2].toDouble(); //cx
+        cameraMatrix.at<double>(2,1) = cam_param[5].toDouble(); //cy
+
+        distCoeffs.at<double>(0) = dist_param[0].toDouble();
+        distCoeffs.at<double>(1) = dist_param[1].toDouble();
+        distCoeffs.at<double>(2) = dist_param[2].toDouble();
+        distCoeffs.at<double>(3) = dist_param[3].toDouble();
+
+        cv::undistort(*src, out, cameraMatrix, distCoeffs);
         emit next(1, &out);
         return 1;
     }

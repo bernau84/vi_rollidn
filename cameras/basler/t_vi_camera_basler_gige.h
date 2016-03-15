@@ -68,18 +68,27 @@ public:
             return -2;
         }
 
-        camera.Open();
-
-        QString mode = par["General"].get().toString();
-        if(mode.compare("MANUAL")){
-
-            /*! \todo imprint setup to camera
-                par["Width"]
-                par["Height"]
-                par["Gain"]
-                par["Exposition"]
-            */
+        try
+        {
+            camera.Open();
         }
+        catch (GenICam::GenericException &e)
+        {
+            // Error handling.
+            cerr << "An exception occurred." << endl
+                    << e.GetDescription() << endl;
+        }
+
+//        QString mode = par["General"].get().toString();
+//        if(mode.compare("MANUAL")){
+
+//            /*! \todo imprint setup to camera
+//                par["Width"]
+//                par["Height"]
+//                par["Gain"]
+//                par["Exposition"]
+//            */
+//        }
 
         sta = CAMSTA_PREPARED;
         return 0;
@@ -182,6 +191,8 @@ public:
 
             // This smart pointer will receive the grab result data.
             CGrabResultPtr ptrGrabResult;
+            CPylonImage image;
+
             camera.StartGrabbing(1);
             while ( camera.IsGrabbing())
             {
@@ -194,19 +205,34 @@ public:
                     // Access the image data.
                     cout << "basler-pic-x: " << ptrGrabResult->GetWidth() << endl;
                     cout << "basler-pic-y: " << ptrGrabResult->GetHeight() << endl;
-                    const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
+                    cout << "basler-pic-size: " << ptrGrabResult->GetImageSize() << endl;
+                    cout << "basler-pic-payload-size: " << ptrGrabResult->GetPayloadSize() << endl;
+                    cout << "basler-pic-format: " << ptrGrabResult->GetPixelType() << endl;
+                    cout << "basler-pic-offset: " << ptrGrabResult->GetOffsetX() << endl;
+                    cout << "basler-pic-padding: " << ptrGrabResult->GetPaddingX() << endl;
+                    cout << "basler-pic-chunk: " << ptrGrabResult->IsChunkDataAvailable() << endl;
+
+                    image.AttachGrabResultBuffer(ptrGrabResult);
+                    image.Save(ImageFileFormat_Bmp, "gige-sample.bmp");
 
 //#if define PYLON_WIN_BUILD && define QT_DEBUG
                     // Display the grabbed image.
                     Pylon::DisplayImage(1, ptrGrabResult);
 //#endif
+                    const uint8_t *pImageBuffer = (uint8_t *) image.GetBuffer();
+                    //const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
 
                     QImage src;
                     switch(ptrGrabResult->GetPixelType()){
 
-                        case PixelType_Mono8:
-                            src = QImage(pImageBuffer, ptrGrabResult->GetWidth(), ptrGrabResult->GetHeight(),
-                                                   QImage::Format_Indexed8);
+                        case PixelType_Mono8: {
+
+                            src = QImage("gige-sample.bmp");
+                            //src = QImage(pImageBuffer, ptrGrabResult->GetWidth(), ptrGrabResult->GetHeight(),
+                            //                      QImage::Format_Indexed8);
+
+                            src.save("gige-snapshot.bmp");
+                        }
                         break;
                         default:   //dodelat podporu rgb pokud bude potreba, bayerovych masek respektive
                             return -101;

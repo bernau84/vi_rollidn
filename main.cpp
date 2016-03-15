@@ -59,10 +59,10 @@ int main(int argc, char *argv[])
     t_roll_idn_collection worker(config_path);
     worker.initialize();
 
-//#ifdef QT_DEBUG
-//    worker.on_trigger(); //start measuring
-//    worker.on_trigger(); //start measuring
-//#endif //
+#ifdef QT_DEBUG
+    worker.on_trigger(); //start measuring
+ //   worker.on_trigger(); //start measuring
+#endif //
 
     return a.exec();
 }

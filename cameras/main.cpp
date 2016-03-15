@@ -8,6 +8,7 @@
 
 #include "basler/t_vi_camera_basler_usb.h"
 #include "offline/t_vi_camera_offline_file.h"
+#include "basler/t_vi_camera_basler_gige.h"
 #include "usbweb/t_vi_camera_web_usb.h"
 
 int main(int argc, char *argv[])
@@ -54,15 +55,16 @@ int main(int argc, char *argv[])
 
     QApplication a(argc, argv);
 
-    t_vi_camera_basler_usb dev;
-    t_vi_camera_offline_file simul;
-    t_vi_camera_web_usb inbuild;
+    //t_vi_camera_basler_usb dev;
+    t_vi_camera_basler_gige deve;
+//    t_vi_camera_offline_file simul;
+//    t_vi_camera_web_usb inbuild;
 
-    dev.init();
-    simul.init();
-    inbuild.init();
+    deve.init();
+//    simul.init();
+//    inbuild.init();
 
-    uint8_t *img = (uint8_t *) new uint8_t[4 * 4000 * 3000];
+    uint8_t *img = (uint8_t *) new uint8_t[4000 * 3000];
     i_vi_camera_base::t_campic_info info;
 
 //    simul.snap(img, 4000 * 3000 * 4, &info);
@@ -71,9 +73,9 @@ int main(int argc, char *argv[])
 //    vizual1.setPixmap(QPixmap::fromImage(QImage(img, info.w, info.h, (QImage::Format)info.format)));
 //    vizual1.show();
 
-//    dev.snap(img, 4000 * 3000 * 4, &info);
+    deve.snap(img, 4000 * 3000, &info);
 
-    inbuild.snap(img, 4000 * 3000 * 4, &info);
+    //inbuild.snap(img, 4000 * 3000 * 4, &info);
 
     QLabel vizual2;
     vizual2.setPixmap(QPixmap::fromImage(QImage(img, info.w, info.h, (QImage::Format)info.format)));

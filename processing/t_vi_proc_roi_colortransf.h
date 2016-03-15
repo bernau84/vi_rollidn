@@ -56,7 +56,7 @@ public slots:
         Mat *src = (Mat *)p2;
 
         ///Convert image to gray
-        cv::cvtColor(*src, out, t_cvt/*CV_BGR2GRAY*/);
+        cv::cvtColor(*src, out, CV_BGR2GRAY);  //todo use t_cvt
 
         ///ROI
         if(roi.width && roi.height){
