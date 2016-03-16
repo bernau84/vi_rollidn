@@ -245,7 +245,7 @@ public:
 
     }
 
-    ~t_vi_camera_basler_usb(){;}
+    virtual ~t_vi_camera_basler_usb(){;}
 };
 
 #endif // T_VI_CAMERA_BASLER_USB_H

@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     worker.initialize();
 
 #ifdef QT_DEBUG
-    worker.on_trigger(); //start measuring
+ //   worker.on_trigger(); //start measuring
  //   worker.on_trigger(); //start measuring
 #endif //
 

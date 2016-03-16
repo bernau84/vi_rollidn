@@ -40,7 +40,7 @@ public:
     {
     }
 
-    ~t_vi_camera_offline_file(){
+    virtual ~t_vi_camera_offline_file(){
     }
 };
 

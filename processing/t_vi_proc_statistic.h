@@ -74,13 +74,18 @@ public slots:
 
                 double weights[3] = {0.299, 0.587, 0.144};  //0.299*R + 0.587*G + 0.144*B
 
-                if(tres.channels == 1)
-                    res = tres[0];
-                else if(tres.channels == 3)
-                    for(int i=0; i<3; i++)
-                        res += tres[i] * weights[i];
+                switch(tres.channels){
+                    case 1:
+                        res = tres[0];
+                    break;
+                    case 3:
+                    case 4:
+                        for(int i=0; i<3; i++)
+                            res += tres[i] * weights[i];
+                    break;
+                }
 
-                out.at<float>(0) = float(res/tres.channels);
+                out.at<float>(0) = res;
             }
             break;
             default:

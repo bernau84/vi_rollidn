@@ -126,7 +126,7 @@ public slots:
 
                 if(tbck.empty()){
 
-                    emit next(1, &tsrc);
+                    emit next(0, &tsrc);
                     return 0;
                 }
 
@@ -166,7 +166,7 @@ public slots:
                     out.at<cv::Vec3b>(y,x)[r] = d;
                 }
 
-        emit next(1, &out);
+        emit next(0, &out);
         return 1;
     }
 };

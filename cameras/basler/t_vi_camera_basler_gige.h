@@ -11,6 +11,7 @@
 
 // Namespace for using pylon objects.
 using namespace Pylon;
+using namespace GenApi;
 
 #if defined( USE_1394 )
 // Setting for using  Basler IEEE 1394 cameras.
@@ -77,6 +78,9 @@ public:
             // Error handling.
             cerr << "An exception occurred." << endl
                     << e.GetDescription() << endl;
+
+            sta = CAMSTA_ERROR;
+            return -3;
         }
 
 //        QString mode = par["General"].get().toString();
@@ -212,15 +216,23 @@ public:
                     cout << "basler-pic-padding: " << ptrGrabResult->GetPaddingX() << endl;
                     cout << "basler-pic-chunk: " << ptrGrabResult->IsChunkDataAvailable() << endl;
 
+                    /*! \todo - delame to pres soubor protoze QImage nezere
+                     * rozliseni ktere by nebylo delitene 4!...mno do budoucna musime prekopyrovat po pixlech
+                     * nebo na to jit pres nejaky mezi buffer s paddingem
+                     * src = QImage(pImageBuffer, ptrGrabResult->GetWidth(), ptrGrabResult->GetHeight(), QImage::Format_Indexed8);
+                     * const uint8_t *pImageBuffer = (uint8_t *) image.GetBuffer();
+                     * //const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
+                     *
+                     */
+
                     image.AttachGrabResultBuffer(ptrGrabResult);
                     image.Save(ImageFileFormat_Bmp, "gige-sample.bmp");
+                    image.Release();
 
-//#if define PYLON_WIN_BUILD && define QT_DEBUG
+#if define PYLON_WIN_BUILD && define QT_DEBUG
                     // Display the grabbed image.
-                    Pylon::DisplayImage(1, ptrGrabResult);
-//#endif
-                    const uint8_t *pImageBuffer = (uint8_t *) image.GetBuffer();
-                    //const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
+                    //Pylon::DisplayImage(1, ptrGrabResult);
+#endif
 
                     QImage src;
                     switch(ptrGrabResult->GetPixelType()){
@@ -228,10 +240,7 @@ public:
                         case PixelType_Mono8: {
 
                             src = QImage("gige-sample.bmp");
-                            //src = QImage(pImageBuffer, ptrGrabResult->GetWidth(), ptrGrabResult->GetHeight(),
-                            //                      QImage::Format_Indexed8);
-
-                            src.save("gige-snapshot.bmp");
+                            //src.save("gige-snapshot.bmp");
                         }
                         break;
                         default:   //dodelat podporu rgb pokud bude potreba, bayerovych masek respektive
@@ -272,7 +281,10 @@ public:
 
     }
 
-    ~t_vi_camera_basler_gige(){;}
+    virtual ~t_vi_camera_basler_gige(){
+
+        camera.Close();
+    }
 };
 
 #endif // T_VI_CAMERA_BASLER_GIGE

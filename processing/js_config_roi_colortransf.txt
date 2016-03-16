@@ -21,8 +21,8 @@
                 "__def": 100,
         	"__min": 1
         },
-        "color-transf" {
-            "__info": "colof transformation code (from open-cv types_c.h), CV_BGR2GRAY(6) by default",
+        "color-transf": {
+            "__info": "color transformation code (from open-cv types_c.h), CV_BGR2GRAY(6) by default",
             "__def": 6
         }
  }

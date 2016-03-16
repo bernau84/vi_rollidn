@@ -52,11 +52,11 @@ public slots:
 
     int proc(int p1, void *p2){
 
-        int t_cvt = (p1 != 0) ? p1 : cvt;
+        int t_cvt = (p1 <= 0) ? cvt : p1;
         Mat *src = (Mat *)p2;
 
         ///Convert image to gray
-        cv::cvtColor(*src, out, CV_BGR2GRAY);  //todo use t_cvt
+        cv::cvtColor(*src, out, t_cvt /*CV_BGR2GRAY*/);
 
         ///ROI
         if(roi.width && roi.height){
