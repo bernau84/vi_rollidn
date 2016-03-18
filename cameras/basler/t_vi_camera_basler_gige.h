@@ -42,12 +42,11 @@ using namespace Basler_UsbCameraParams;
 class t_vi_camera_basler_gige : public i_vi_camera_base
 {
 private:
-    Camera_t camera;
-
     // Automagically call PylonInitialize and PylonTerminate to ensure the pylon runtime system
     // is initialized during the lifetime of this object.
     Pylon::PylonAutoInitTerm autoInitTerm;  /*! nevim tedy k cemu */
 
+    Camera_t camera;
 public:
 
     int init(){
@@ -129,7 +128,9 @@ public:
 
                     CBaslerGigEInstantCamera::GrabResultPtr_t ptrGrabResultA;
                     camera.GrabOne(5000, ptrGrabResultA);
-
+#if define PYLON_WIN_BUILD && define QT_DEBUG
+                    Pylon::DisplayImage(1, ptrGrabResultA);
+#endif //QT_DEBUG
                     prev_exp = exp;
                     exp = camera.ExposureTimeAbs.GetValue();
                 } else {
@@ -153,7 +154,9 @@ public:
             {
                 CBaslerGigEInstantCamera::GrabResultPtr_t ptrGrabResultA;
                 camera.GrabOne( 5000, ptrGrabResultA);
-                //Pylon::DisplayImage(1, ptrGrabResultA);
+#if define PYLON_WIN_BUILD && define QT_DEBUG
+                Pylon::DisplayImage(1, ptrGrabResultA);
+#endif //QT_DEBUG
                 ++n;
 
                 prev_exp = exp;
@@ -270,12 +273,14 @@ public:
 
     t_vi_camera_basler_gige(const QString &path):
         i_vi_camera_base(path),
+        autoInitTerm(),
         camera()
     {
 
     }
 
     t_vi_camera_basler_gige():
+        autoInitTerm(),
         camera()
     {
 

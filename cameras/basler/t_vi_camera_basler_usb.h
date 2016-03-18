@@ -40,11 +40,10 @@ using namespace Basler_UsbCameraParams;
 class t_vi_camera_basler_usb : public i_vi_camera_base
 {
 private:
-    CBaslerUsbInstantCamera camera;
-
     // Automagically call PylonInitialize and PylonTerminate to ensure the pylon runtime system
     // is initialized during the lifetime of this object.
-    Pylon::PylonAutoInitTerm autoInitTerm;  /*! nevim tedy k cemu */
+    Pylon::PylonAutoInitTerm autoInitTerm;
+    CBaslerUsbInstantCamera camera;
 
 public:
 
@@ -115,7 +114,9 @@ public:
 
                     CBaslerUsbInstantCamera::GrabResultPtr_t ptrGrabResultA;
                     camera.GrabOne(5000, ptrGrabResultA);
-
+#if define PYLON_WIN_BUILD && define QT_DEBUG
+                    Pylon::DisplayImage(1, ptrGrabResultA);
+#endif //QT_DEBUG
                     prev_exp = exp;
                     exp = camera.ExposureTime.GetValue();
                 } else {
@@ -139,7 +140,9 @@ public:
             {
                 CBaslerUsbInstantCamera::GrabResultPtr_t ptrGrabResultA;
                 camera.GrabOne( 5000, ptrGrabResultA);
-                //Pylon::DisplayImage(1, ptrGrabResultA);
+#if define PYLON_WIN_BUILD && define QT_DEBUG
+                    Pylon::DisplayImage(1, ptrGrabResultA);
+#endif //QT_DEBUG
                 ++n;
 
                 prev_exp = exp;

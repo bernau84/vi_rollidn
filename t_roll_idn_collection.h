@@ -66,8 +66,8 @@ private:
     double area_min;    //minimalni plocha role v pixelech, vse pod je chyba
     double area_max;    //max plocha role v pixelech, vse nad je chyba
 
-    float ref0_luminance;   //referencni jas odecteny po ustaleni atoexpozice
-    float ref1_luminance;   //referencni jas odecteny po ustaleni atoexpozice - minuly
+    float ref_luminance;   //referencni jas odecteny po ustaleni atoexpozice - prvni po startu programu
+    float last_luminance;   //referencni jas odecteny po ustaleni atoexpozice - poslendi mereni backgroundu
     float act_luminance;   //jas posledniho snimku
 
     uint64_t exposition;  //aktualni hodnota expozice
@@ -471,50 +471,60 @@ public slots:
     int on_ready(){
 
         //zafixujeme nastaveni expozice a ulozime si referencni hodnotu jasu
-        if(ref0_luminance < 0){
+        if(ref_luminance < 0){
 
+            error_mask = VI_ERR_OK;
             if(cam_device.sta != i_vi_camera_base::CAMSTA_PREPARED){
 
                 error_mask |= VI_ERR_CAM_NOTFOUND;
+                return 0;
             } else if(cam_device.exposure(100, i_vi_camera_base::CAMVAL_AUTO_TOLERANCE)){ //100us tolerance to settling exposure
 
                 on_trigger(true); //true == background mode
                 if(error_mask == VI_ERR_OK){
 
-                    ref1_luminance = ref0_luminance = act_luminance;
+                    last_luminance = ref_luminance = act_luminance;
                     return 1;
                 }
             } else {
 
                 error_mask |= VI_ERR_CAM_EXPOSITION;  //autoexpozice failovala
+                return 0;
             }
         }
 
-        return 0;
+        return 1;
     }
 
+    /*! vychazime z referenci expoxice a jasu sceny po startu
+     * pokud se jas sceny lisi, korigujemve stejnem pomeru i expozici
+     * !referencni expozici ani jas nemenime !
+     */
     int on_background(){
 
         bool mode = true; //false - bez noveho pozadi
 
         exposition = cam_device.exposure(0, i_vi_camera_base::CAMVAL_UNDEF);
 
-        float dif_luminance = ref0_luminance - ref1_luminance;
-        if((dif_luminance > 0) && (fabs(dif_luminance) > 255 * 0.05)){ //zmena o pet procent
+        float dif_luminance = ref_luminance / last_luminance;
+        if(dif_luminance > 1.05){ //moc temne
 
             mode = true;    //budem chti novy snime pozadi
-            exposition = cam_device.exposure(exposition / 1.05, i_vi_camera_base::CAMVAL_ABS); //expozici dolu o 5procent
-        } else if((dif_luminance < 0) && (fabs(dif_luminance) > 255 * 0.05)){
+            //pomerove zvednem expozici nahoru
+            int64_t nexpo = exposition * dif_luminance;
+            nexpo = cam_device.exposure(nexpo, i_vi_camera_base::CAMVAL_ABS);
+        } else if(dif_luminance < 0.95){  //moc svtele
 
             mode = true;    //budem chti novy snime pozadi
-            exposition = cam_device.exposure(exposition * 1.05, i_vi_camera_base::CAMVAL_ABS); //expozici o 5procent nahoru
+            //pomerove snizime expozici dolu
+            int64_t nexpo = exposition * dif_luminance;
+            nexpo = cam_device.exposure(nexpo, i_vi_camera_base::CAMVAL_ABS);
         }
 
         on_trigger(mode); //true == background mode
         if(error_mask == VI_ERR_OK){
 
-            ref1_luminance = ref0_luminance;
-            ref0_luminance = act_luminance;
+            last_luminance = act_luminance;
             return 1;
         }
 
@@ -523,6 +533,7 @@ public slots:
 
     int on_calibration(){
 
+        last_luminance = ref_luminance = -1;  //indikuje ze nebylo dosud provedeno nastaeni expozice
         return on_trigger();
     }
 
@@ -584,7 +595,7 @@ public:
         if(0 >= (area_max = par["contour_maximal"].get().toDouble()))
             area_max = ERR_MEAS_MAXAREA_TH;
 
-        ref1_luminance = ref0_luminance = -1;  //indikuje ze nebylo dosud provedeno
+        last_luminance = ref_luminance = -1;  //indikuje ze nebylo dosud provedeno
     }
 
     ~t_roll_idn_collection(){
