@@ -37,9 +37,11 @@ public:
 
 public slots:
     int reload(int p){
+
         p = p;
         cam_param = par["instrict"].get().toArray().toVariantList();   //from collection
-        dist_param = par["distorison"].get().toArray().toVariantList();
+        dist_param = par["distorsion"].get().toArray().toVariantList();
+        return 1;
     }
 
     int proc(int p1, void *p2){
@@ -47,13 +49,19 @@ public slots:
         p1 = p1;
         Mat *src = (Mat *)p2;
 
+        if((cam_param.size() != 9) || (dist_param.size() != 4)){
+
+            emit next(p1, src);  //zjednodusime si to a poslem p1 dale
+            return 0;
+        }
+
         Mat cameraMatrix = Mat::eye(3, 3, CV_64F);
         Mat distCoeffs = Mat::zeros(8, 1, CV_64F);
 
         cameraMatrix.at<double>(0,0) = cam_param[0].toDouble(); //fx
         cameraMatrix.at<double>(1,1) = cam_param[4].toDouble(); //fy
-        cameraMatrix.at<double>(2,0) = cam_param[2].toDouble(); //cx
-        cameraMatrix.at<double>(2,1) = cam_param[5].toDouble(); //cy
+        cameraMatrix.at<double>(0,2) = cam_param[2].toDouble(); //cx
+        cameraMatrix.at<double>(1,2) = cam_param[5].toDouble(); //cy
 
         distCoeffs.at<double>(0) = dist_param[0].toDouble();
         distCoeffs.at<double>(1) = dist_param[1].toDouble();
@@ -61,7 +69,7 @@ public slots:
         distCoeffs.at<double>(3) = dist_param[3].toDouble();
 
         cv::undistort(*src, out, cameraMatrix, distCoeffs);
-        emit next(1, &out);
+        emit next(p1, &out); //zjednodusime si to a poslem p1 dale
         return 1;
     }
 

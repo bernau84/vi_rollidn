@@ -98,5 +98,13 @@
                 "__def": 16,
                 "__min": 1,
                 "__max": 255
+        },
+        "instrict": {
+                "__info": "9 instrict parameteres == camera matrix (center a and focal lenghts in pixels)",
+                "__def": [2000.0, 0.0, 1200.0, 0.0, 2000.0, 1000.0, 0.0, 0.0, 1.0]
+        },
+        "distorsion": {
+                "__info": "4 parameters, radial coretions k1, k2 and tangential corrections p1, p2",
+                "__def": [-0.408904, 0.302240, -0.002334, -0.004845]
         }
  }

@@ -19,6 +19,7 @@
 #include "processing/t_vi_proc_roll_approx.h"
 #include "processing/t_vi_proc_sub_background.h"
 #include "processing/t_vi_proc_statistic.h"
+#include "processing/t_vi_proc_rectification.h"
 
 #include "t_vi_setup.h"
 #include "t_vi_specification.h"
@@ -51,6 +52,7 @@ private:
 
     t_vi_camera_offline_file cam_simul;
 
+    t_vi_proc_rectify   re;
     t_vi_proc_colortransf ct;
     t_vi_proc_threshold th;
     t_vi_proc_roll_approx ms;
@@ -450,7 +452,7 @@ public slots:
         //process measurement or save new background
         cv::Mat src(info.h, info.w, CV_8UC4, img);
         int order = (background) ? t_vi_proc_sub_backgr::SUBBCK_REFRESH : t_vi_proc_sub_backgr::SUBBCK_SUBSTRACT;
-        bc.proc(order, &src);
+        re.proc(order, &src);
 
         //calc average brightness
         st.proc(t_vi_proc_statistic::STATISTIC_BRIGHTNESS, &src);
@@ -568,6 +570,7 @@ public:
         cam_device(path),
         cam_simul(path),
         abort(false),
+        re(path),
         ct(path),
         th(path),
         ms(path),
@@ -576,6 +579,7 @@ public:
         store(QDir::currentPath() + "/storage")
     {
         //zretezeni analyz
+        QObject::connect(&re, SIGNAL(next(int, void *)), &bc, SLOT(proc(int, void *)));
         QObject::connect(&bc, SIGNAL(next(int, void *)), &ct, SLOT(proc(int, void *)));
         QObject::connect(&ct, SIGNAL(next(int, void *)), &th, SLOT(proc(int, void *)));
         QObject::connect(&th, SIGNAL(next(int, void *)), &ms, SLOT(proc(int, void *)));
