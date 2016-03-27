@@ -19,11 +19,13 @@ static const QString proc_rectify_defconfigpath(":/js_config_rectify.txt");
 class t_vi_proc_rectify : public i_proc_stage
 {
 private:
-    Mat out;
     QList<QVariant> cam_param;
     QList<QVariant> dist_param;
 
 public:
+
+    Mat out;
+
     t_vi_proc_rectify(const QString &path = proc_rectify_defconfigpath):
         i_proc_stage(path)
     {
@@ -69,6 +71,8 @@ public slots:
         distCoeffs.at<double>(3) = dist_param[3].toDouble();
 
         cv::undistort(*src, out, cameraMatrix, distCoeffs);
+        imwrite("undistoreted.bmp", out);
+
         emit next(p1, &out); //zjednodusime si to a poslem p1 dale
         return 1;
     }

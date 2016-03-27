@@ -278,6 +278,9 @@ public slots:
 
                 __eval_measurement_res();  //prepocet na mm
 
+                QImage output(ms.loc.data, ms.loc.cols, ms.loc.rows, QImage::Format_Indexed8);
+                emit present_meas(output, mm_length, mm_diameter);  //vizualizace mereni
+
                 uint32_t s_dia = mm_diameter * 10;
                 uint32_t s_len = mm_length * 10;
 
@@ -343,6 +346,9 @@ public slots:
                 error_mask = VI_ERR_OK;
 
                 on_calibration();
+
+                QImage output(ms.loc.data, ms.loc.cols, ms.loc.rows, QImage::Format_Indexed8);
+                emit present_meas(output, mm_length, mm_diameter);  //vizualizace mereni
 
                 if((th.maxContRect.size.height * th.maxContRect.size.width) < area_min)
                     error_mask |= VI_ERR_MEAS1;
@@ -449,10 +455,16 @@ public slots:
         snapshot = QImage(img, info.w, info.h, (QImage::Format)info.format);
         store.insert(snapshot);
 
+        emit present_preview(snapshot, 0, 0);    //vizualizace preview kamery
+
         //process measurement or save new background
         cv::Mat src(info.h, info.w, CV_8UC4, img);
         int order = (background) ? t_vi_proc_sub_backgr::SUBBCK_REFRESH : t_vi_proc_sub_backgr::SUBBCK_SUBSTRACT;
         re.proc(order, &src);
+
+        //alespon rekrifikovany obrazek
+        QImage output(re.out.data, re.out.cols, re.out.rows, QImage::Format_RGB32);
+        emit present_meas(output, 0, 0);  //vizualizace mereni
 
         //calc average brightness
         st.proc(t_vi_proc_statistic::STATISTIC_BRIGHTNESS, &src);
@@ -540,7 +552,9 @@ public slots:
     }
 
 signals:
-    void next(int p1, void *p2);
+    void process_next(int p1, void *p2);  //pro vstupovani mezi jednotlive analyzy
+    void present_meas(QImage &im, double length, double diameter);  //vizualizace mereni
+    void present_preview(QImage &im, double length, double diameter);    //vizualizace preview kamery
 
 public slots:
 
@@ -550,7 +564,7 @@ public slots:
          * two t_vi_proc_* stages
          */
 
-        emit next(p1, p2);
+        emit process_next(p1, p2);
         return 1;
     }
 

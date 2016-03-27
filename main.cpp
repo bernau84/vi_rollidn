@@ -59,8 +59,14 @@ int main(int argc, char *argv[])
     t_roll_idn_collection worker(config_path);
     worker.initialize();
 
+    QObject::connect(&worker, SIGNAL(present_meas(QImage &,double,double)),  //vizualizace mereni
+                     &w, SLOT(measured(QImage&,double,double)));
+
+    QObject::connect(&worker, SIGNAL(present_preview(QImage &,double,double)),    //vizualizace preview kamery
+                     &w, SLOT(preview(QImage&,double,double)));
+
 #ifdef QT_DEBUG
- //   worker.on_trigger(); //start measuring
+   worker.on_trigger(); //start measuring
  //   worker.on_trigger(); //start measuring
 #endif //
 

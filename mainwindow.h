@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QImage>
 
 namespace Ui {
 class MainWindow;
@@ -17,6 +18,11 @@ public:
 
 private:
     Ui::MainWindow *ui;
+
+public slots:
+    void measured(QImage &im, double length, double diameter);
+    void preview(QImage &im, double length, double diameter);
+
 };
 
 #endif // MAINWINDOW_H
