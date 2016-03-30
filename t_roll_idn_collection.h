@@ -518,21 +518,24 @@ public slots:
 
         bool mode = true; //false - bez noveho pozadi
 
-        exposition = cam_device.exposure(0, i_vi_camera_base::CAMVAL_UNDEF);
+        if(cam_device.sta == i_vi_camera_base::CAMSTA_PREPARED){
 
-        float dif_luminance = ref_luminance / last_luminance;
-        if(dif_luminance > 1.05){ //moc temne
+            exposition = cam_device.exposure(0, i_vi_camera_base::CAMVAL_UNDEF);
 
-            mode = true;    //budem chti novy snime pozadi
-            //pomerove zvednem expozici nahoru
-            int64_t nexpo = exposition * dif_luminance;
-            nexpo = cam_device.exposure(nexpo, i_vi_camera_base::CAMVAL_ABS);
-        } else if(dif_luminance < 0.95){  //moc svtele
+            float dif_luminance = ref_luminance / last_luminance;
+            if(dif_luminance > 1.05){ //moc temne
 
-            mode = true;    //budem chti novy snime pozadi
-            //pomerove snizime expozici dolu
-            int64_t nexpo = exposition * dif_luminance;
-            nexpo = cam_device.exposure(nexpo, i_vi_camera_base::CAMVAL_ABS);
+                mode = true;    //budem chti novy snime pozadi
+                //pomerove zvednem expozici nahoru
+                int64_t nexpo = exposition * dif_luminance;
+                nexpo = cam_device.exposure(nexpo, i_vi_camera_base::CAMVAL_ABS);
+            } else if(dif_luminance < 0.95){  //moc svtele
+
+                mode = true;    //budem chti novy snime pozadi
+                //pomerove snizime expozici dolu
+                int64_t nexpo = exposition * dif_luminance;
+                nexpo = cam_device.exposure(nexpo, i_vi_camera_base::CAMVAL_ABS);
+            }
         }
 
         on_trigger(mode); //true == background mode

@@ -52,6 +52,8 @@ int main(int argc, char *argv[])
     pe.insert(log_config_key, log_config_value);
 
     QApplication a(argc, argv);
+//    a.setApplicationVersion("1.1.2016.03.31");
+
     MainWindow w;
     w.show();
 
@@ -66,7 +68,7 @@ int main(int argc, char *argv[])
                      &w, SLOT(preview(QImage&,double,double)));
 
 #ifdef QT_DEBUG
-   worker.on_trigger(); //start measuring
+ //  worker.on_trigger(); //start measuring
  //   worker.on_trigger(); //start measuring
 #endif //
 

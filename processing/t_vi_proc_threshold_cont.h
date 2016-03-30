@@ -98,6 +98,9 @@ public slots:
 
         drawContours(out, contours, maxindex, Scalar(255, 255, 255), 1, 8, hierarchy, 0, Point());
 
+        if(maxContRect.center.x * maxContRect.center.y == 0)
+            return 0;  //zadny emit - koncime
+
         /// Show in a window
         Mat resized;
         resize(*src, resized, Size(), 0.5, 0.5);
