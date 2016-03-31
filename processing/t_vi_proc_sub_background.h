@@ -124,7 +124,9 @@ public slots:
 
             default:  //normalni mode
 
-                if(tbck.empty()){
+                if(tbck.empty() ||
+                        tbck.cols != tsrc.cols ||
+                        tbck.rows != tsrc.rows ){
 
                     emit next(0, &tsrc);
                     return 0;

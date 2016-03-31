@@ -8,7 +8,7 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
-VERSION = 1.2.03.31
+VERSION = 2.2.03.31
 
 SOURCES += main.cpp \
     mainwindow.cpp
@@ -67,8 +67,8 @@ HEADERS += \
     processing/t_vi_proc_threshold_cont.h \
     cameras/basler/t_vi_camera_basler_gige.h
 
-#DEFINES += USE_USB
-DEFINES += USE_GIGE
+DEFINES += USE_USB
+#DEFINES += USE_GIGE
 
 RESOURCES += \
     processing/defaults.qrc

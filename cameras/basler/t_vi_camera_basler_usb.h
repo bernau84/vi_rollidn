@@ -114,7 +114,7 @@ public:
 
                     CBaslerUsbInstantCamera::GrabResultPtr_t ptrGrabResultA;
                     camera.GrabOne(5000, ptrGrabResultA);
-#if define PYLON_WIN_BUILD && define QT_DEBUG
+#if define PYLON_WIN_BUILD && define xQT_DEBUG
                     Pylon::DisplayImage(1, ptrGrabResultA);
 #endif //QT_DEBUG
                     prev_exp = exp;
@@ -140,7 +140,7 @@ public:
             {
                 CBaslerUsbInstantCamera::GrabResultPtr_t ptrGrabResultA;
                 camera.GrabOne( 5000, ptrGrabResultA);
-#if define PYLON_WIN_BUILD && define QT_DEBUG
+#if define PYLON_WIN_BUILD && define xQT_DEBUG
                     Pylon::DisplayImage(1, ptrGrabResultA);
 #endif //QT_DEBUG
                 ++n;
@@ -198,10 +198,10 @@ public:
                     cout << "basler-pic-y: " << ptrGrabResult->GetHeight() << endl;
                     const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
 
-//#if define PYLON_WIN_BUILD && define QT_DEBUG
+#if define PYLON_WIN_BUILD && define xQT_DEBUG
                     // Display the grabbed image.
                     Pylon::DisplayImage(1, ptrGrabResult);
-//#endif
+#endif
 
                     QImage src;
                     switch(ptrGrabResult->GetPixelType()){

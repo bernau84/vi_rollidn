@@ -518,7 +518,7 @@ public slots:
 
         bool mode = true; //false - bez noveho pozadi
 
-        if(cam_device.sta == i_vi_camera_base::CAMSTA_PREPARED){
+        if((ref_luminance > 0) && cam_device.sta == i_vi_camera_base::CAMSTA_PREPARED){
 
             exposition = cam_device.exposure(0, i_vi_camera_base::CAMVAL_UNDEF);
 
