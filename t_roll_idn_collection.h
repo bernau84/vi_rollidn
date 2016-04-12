@@ -206,7 +206,13 @@ private:
             if(z_param.size() > 1)
                 if(z_param[1].isValid()){ //mame zpresnujici udaje o scene
 
-                    /*! \todo - z uhlu pasu a ze zmerenho prumeru upravime conv_l */
+                    // spocitame odhad vzdalenosti stredu role od opticke osy kamery
+                    double H = z_param[3].toDouble() - z_param[2].toDouble() - z_param[1].toDouble();
+                    double L = z_param[1].toDouble();
+                    double approx_z = 2050; //sqrt(H*H + L*L);
+
+                    mm_diameter = (approx_z * raw_diameter) / f_d;
+                    mm_length = ((approx_z - mm_diameter/2) * raw_length) / f_l;
                 }
 
         } else if(ratio_l && ratio_d) {  //mame alespon hruby calibracni prepocet pix -> mm?

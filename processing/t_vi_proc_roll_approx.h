@@ -346,8 +346,14 @@ public slots:
 
         eliptic.left_corr = loffs + laxis;  //shift calc - ie. transform from parametric to y=f(x) eq.
         eliptic_left_radius = laxis;
+
         qDebug() << "Correction-Left-eliptic:" << QString::number(eliptic.left_corr) <<
                     ", radius" << QString::number(eliptic_left_radius);
+
+        if(eliptic.left_corr <= 1e-6 && eliptic_left_radius <= 1e-6){
+            //emit next(1, src);
+            return 0;//koncime zadny emit - nepovedlo se; zbuchlo byt o pri pokusu vykreslit elipsu
+        }
 
                 cv::ellipse(loc, Point(eliptic.left_corr, line1[2] + eliptic.diameter/2), Size(abs(laxis), abs(ldia/2)),
                         0.0, 0.0, 360, Scalar(128, 128 ,128), 2, 4);
@@ -379,6 +385,11 @@ public slots:
         eliptic_right_radius = raxis;
         qDebug() << "Correction-Right-eliptic:" << QString::number(eliptic.right_corr) <<
                     ", radius" << QString::number(eliptic_right_radius);
+
+        if(eliptic.right_corr <= 1e-6 && eliptic_right_radius <= 1e-6){
+            //emit next(1, src);
+            return 0;//koncime zadny emit - nepovedlo se; zbuchlo byt o pri pokusu vykreslit elipsu
+        }
 
                 cv::ellipse(loc, Point(eliptic.right_corr, line1[2] + eliptic.diameter/2), Size(abs(raxis), abs(rdia/2)),
                         0.0, 0.0, 360, Scalar(128, 128, 128), 2, 4);
