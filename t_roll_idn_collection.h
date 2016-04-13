@@ -173,16 +173,28 @@ private:
             error_mask |= VI_ERR_MEAS5;  //warning high diviation
         }
 
+//        if(ms.eliptic.left_err < ms.midprof.left_err){
+
+//            log += QString("meas-error: 6(elipses left fallback)\r\n");
+//            error_mask |= VI_ERR_MEAS6;      //fallback to elipse method indication
+
+//            raw_diameter = ms.midprof.diameter;  //elipsy vychazeji lepe - berem je
+//            raw_length = ms.eliptic.length + ms.eliptic_left_radius + ms.eliptic_right_radius;
+//        }
+
+//        if(ms.eliptic.right_err < ms.midprof.right_err){
+
+//            log += QString("meas-error: 7(elipses right fallback)\r\n");
+//            error_mask |= VI_ERR_MEAS6;      //fallback to elipse method indication
+
+//            raw_diameter = ms.midprof.diameter;  //elipsy vychazeji lepe - berem je
+//            raw_length = ms.midprof.length + ms.midprof.left_corr + ms.eliptic_right_radius;
+//        }
+
         if(overal_length_err_elipse < overal_length_err_midline){
 
-            log += QString("meas-error: 6(unmeasured)\r\n");
+            log += QString("meas-error: 8(elipses fallback for both sides)\r\n");
             error_mask |= VI_ERR_MEAS6;      //fallback to elipse method indication
-
-            raw_diameter = ms.eliptic.diameter;  //elipsy vychazeji lepe - berem je
-            raw_length = ms.eliptic.length + ms.eliptic_left_radius + ms.eliptic_right_radius;
-        }
-
-        if(overal_length_err_elipse < overal_length_err_midline){
 
             raw_diameter = ms.eliptic.diameter;  //elipsy vychazeji lepe - berem je
             raw_length = ms.eliptic.length + ms.eliptic_left_radius + ms.eliptic_right_radius;
