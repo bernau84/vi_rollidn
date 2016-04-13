@@ -71,7 +71,7 @@ public slots:
         distCoeffs.at<double>(3) = dist_param[3].toDouble();
 
         cv::undistort(*src, out, cameraMatrix, distCoeffs);
-        imwrite("undistoreted.bmp", out);
+        //imwrite("undistoreted.bmp", out);
 
         emit next(p1, &out); //zjednodusime si to a poslem p1 dale
         return 1;

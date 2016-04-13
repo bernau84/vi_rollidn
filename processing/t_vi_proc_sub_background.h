@@ -119,7 +119,7 @@ public slots:
                 }
 
                 imwrite(std_bpath, bck);
-                imshow("Backround cummulative", bck);
+                //imshow("Backround cummulative", bck);
                 return ++bck_num;  //konec signal dal nesirime
 
             default:  //normalni mode
