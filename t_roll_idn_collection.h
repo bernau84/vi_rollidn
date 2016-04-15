@@ -173,23 +173,23 @@ private:
             error_mask |= VI_ERR_MEAS5;  //warning high diviation
         }
 
-//        if(ms.eliptic.left_err < ms.midprof.left_err){
+        if(ms.eliptic.left_err < ms.midprof.left_err){
 
-//            log += QString("meas-error: 6(elipses left fallback)\r\n");
-//            error_mask |= VI_ERR_MEAS6;      //fallback to elipse method indication
+            log += QString("meas-warning: 6(elipses left fallback)\r\n");
+            error_mask |= VI_ERR_MEAS6;      //fallback to elipse method indication
 
-//            raw_diameter = ms.midprof.diameter;  //elipsy vychazeji lepe - berem je
-//            raw_length = ms.eliptic.length + ms.eliptic_left_radius + ms.eliptic_right_radius;
-//        }
+            raw_diameter = ms.midprof.diameter;
+            raw_length = th.maxContRect.size.width - ms.midprof.right_corr - ms.eliptic.left_corr;
+        }
 
-//        if(ms.eliptic.right_err < ms.midprof.right_err){
+        if(ms.eliptic.right_err < ms.midprof.right_err){
 
-//            log += QString("meas-error: 7(elipses right fallback)\r\n");
-//            error_mask |= VI_ERR_MEAS6;      //fallback to elipse method indication
+            log += QString("meas-warning: 7(elipses right fallback)\r\n");
+            error_mask |= VI_ERR_MEAS6;      //fallback to elipse method indication
 
-//            raw_diameter = ms.midprof.diameter;  //elipsy vychazeji lepe - berem je
-//            raw_length = ms.midprof.length + ms.midprof.left_corr + ms.eliptic_right_radius;
-//        }
+            raw_diameter = ms.midprof.diameter;  //elipsy vychazeji lepe - berem je
+            raw_length = th.maxContRect.size.width - ms.eliptic.right_corr - ms.midprof.left_corr;
+        }
 
         if(overal_length_err_elipse < overal_length_err_midline){
 
@@ -221,7 +221,8 @@ private:
                     // spocitame odhad vzdalenosti stredu role od opticke osy kamery
                     double H = z_param[3].toDouble() - z_param[2].toDouble() - z_param[1].toDouble();
                     double L = z_param[1].toDouble();
-                    double approx_z = 2050; //sqrt(H*H + L*L);
+                    double approx_z = 2050; //sqrt(H*H + L*L); - pro tenke
+                    //double approx_z = 1990; //tluste
 
                     mm_diameter = (approx_z * raw_diameter) / f_d;
                     mm_length = ((approx_z - mm_diameter/2) * raw_length) / f_l;
@@ -502,28 +503,28 @@ public slots:
 
     int on_ready(){
 
-        //zafixujeme nastaveni expozice a ulozime si referencni hodnotu jasu
-        if(ref_luminance < 0){
+//        //zafixujeme nastaveni expozice a ulozime si referencni hodnotu jasu
+//        if(ref_luminance < 0){
 
-            error_mask = VI_ERR_OK;
-            if(cam_device.sta != i_vi_camera_base::CAMSTA_PREPARED){
+//            error_mask = VI_ERR_OK;
+//            if(cam_device.sta != i_vi_camera_base::CAMSTA_PREPARED){
 
-                error_mask |= VI_ERR_CAM_NOTFOUND;
-                return 0;
-            } else if(cam_device.exposure(100, i_vi_camera_base::CAMVAL_AUTO_TOLERANCE)){ //100us tolerance to settling exposure
+//                error_mask |= VI_ERR_CAM_NOTFOUND;
+//                return 0;
+//            } else if(cam_device.exposure(100, i_vi_camera_base::CAMVAL_AUTO_TOLERANCE)){ //100us tolerance to settling exposure
 
-                on_trigger(true); //true == background mode
-                if(error_mask == VI_ERR_OK){
+//                on_trigger(true); //true == background mode
+//                if(error_mask == VI_ERR_OK){
 
-                    last_luminance = ref_luminance = act_luminance;
-                    return 1;
-                }
-            } else {
+//                    last_luminance = ref_luminance = act_luminance;
+//                    return 1;
+//                }
+//            } else {
 
-                error_mask |= VI_ERR_CAM_EXPOSITION;  //autoexpozice failovala
-                return 0;
-            }
-        }
+//                error_mask |= VI_ERR_CAM_EXPOSITION;  //autoexpozice failovala
+//                return 0;
+//            }
+//        }
 
         return 1;
     }
