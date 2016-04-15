@@ -29,6 +29,7 @@ public:
     t_vi_proc_rectify(const QString &path = proc_rectify_defconfigpath):
         i_proc_stage(path)
     {
+        fancy_name = "rectification(" + fancy_name + ")";
         reload(0);
         qDebug() << "Rectification camera-matrix params no" << cam_param.size();
         qDebug() << "Rectification distorsion params no" << dist_param.size();
@@ -46,10 +47,13 @@ public slots:
         return 1;
     }
 
-    int proc(int p1, void *p2){
+private:
+    int iproc(int p1, void *p2){
 
         p1 = p1;
         Mat *src = (Mat *)p2;
+
+        qDebug() << QString("undistortion pic channel no %1").arg(src->channels());
 
         if((cam_param.size() != 9) || (dist_param.size() != 4)){
 

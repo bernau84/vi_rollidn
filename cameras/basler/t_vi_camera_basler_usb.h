@@ -170,7 +170,7 @@ public:
         return camera.ExposureTime.GetValue();
     }
 
-    int snap(void *img, unsigned free, t_campic_info *info = NULL){
+    int isnap(void *img, unsigned free, t_campic_info *info = NULL){
 
         if(sta != CAMSTA_PREPARED)
             return -1;

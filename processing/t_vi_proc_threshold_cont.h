@@ -30,6 +30,7 @@ public:
     t_vi_proc_threshold(const QString &path = proc_threshold_defconfigpath):
         i_proc_stage(path)
     {
+        fancy_name = "treshold-contours(" + fancy_name + ")";
         reload(0);
         qDebug() << "Threshold & contours setup:" << thresh << max_thresh << min_contour_area;
     }
@@ -55,7 +56,8 @@ public slots:
         return 1;
     }
 
-    int proc(int p1, void *p2){
+private:
+    int iproc(int p1, void *p2){
 
         p1 = p1;
 

@@ -6,10 +6,9 @@
 #include "t_camera_attrib.h"
 
 #include <QImage>
+#include <QElapsedTimer>
 
 using namespace std;
-
-
 
 class i_vi_camera_base {
 
@@ -39,8 +38,15 @@ public:
         unsigned format;
     };
 
+
 protected:
+    QElapsedTimer etimer;
+    qint64 conv_elapsed;
+    qint64 snap_elapsed;
     t_vi_camera_attrib par;     //camera attributes
+
+    /*! \brief interface for taking pictures */
+    virtual int isnap(void *img, unsigned free, t_campic_info *info = NULL) = 0;
 
     /*! \brief setup collection io, read for empty/default val */
     QVariant setup(QString &name, QVariant v = QVariant()){
@@ -63,6 +69,8 @@ protected:
         int ret = 0;
         QImage dest;
 
+        etimer.start();
+
         QString f = par["pic-format"].get().toString();  //pozadovany format
         if(0 == f.compare("8bMONO")){
 
@@ -74,6 +82,10 @@ protected:
 
             dest = src;
         }
+
+        conv_elapsed = etimer.elapsed();
+        qDebug() << QString("img-conversion takes %1ms").arg(conv_elapsed);
+
 
         if((int)free < (ret = dest.byteCount())) //nemame dostatecny prostor
             return -ret;
@@ -115,7 +127,14 @@ public:
     }
 
     /*! \brief picture acquisition according to current t_vi_camera_attrib */
-    virtual int snap(void *img, unsigned free, t_campic_info *info = NULL) = 0;
+    int snap(void *img, unsigned free, t_campic_info *info = NULL){
+
+        etimer.start();
+        int ret = isnap(img, free, info);
+        snap_elapsed = etimer.elapsed();
+        qDebug() << QString("img-snapshot takes %1ms").arg(snap_elapsed);
+        return ret;
+    }
 
 
     /*! \brief return camera status */

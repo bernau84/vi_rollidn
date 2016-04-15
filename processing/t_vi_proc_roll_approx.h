@@ -267,6 +267,7 @@ public:
     t_vi_proc_roll_approx(const QString &path = proc_roll_approx_defconfigpath):
         i_proc_stage(path)
     {
+        fancy_name = "roll-approximation(" + fancy_name + ")";
         reload(0);
     }
 
@@ -280,7 +281,8 @@ public slots:
         return 1;
     }
 
-    int proc(int p1, void *p2){
+private:
+    int iproc(int p1, void *p2){
 
         memset(&eliptic, 0, sizeof(t_vi_proc_roll_ind_res));
         memset(&midprof, 0, sizeof(t_vi_proc_roll_ind_res));
@@ -416,8 +418,11 @@ public slots:
             QString("(+/-%1 on left, +/-%2 on right)").arg(eliptic.left_err).arg(eliptic.right_err);
 
         //vizualizace
+        Mat resized;
+        resize(loc, resized, Size(), 0.5, 0.5);
         cv::namedWindow("Roll-approximation", CV_WINDOW_AUTOSIZE);
-        cv::imshow("Roll-approximation", loc);
+        cv::imshow("Roll-approximation", resized);
+        cv::resizeWindow("Roll-approximation", resized.cols, resized.rows);
 
 //        cv::namedWindow("Roll-original", CV_WINDOW_AUTOSIZE);
 //        cv::imshow("Roll-original", out);

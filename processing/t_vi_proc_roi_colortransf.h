@@ -23,8 +23,8 @@ public:
     t_vi_proc_colortransf(const QString &path = proc_colortransf_defconfigpath):
         i_proc_stage(path)
     {
+        fancy_name = "colortransf (" + fancy_name + ")";
         reload(0);
-
         qDebug() << "ColorTr & ROI import setup:" << cvt << roi.x << roi.y << roi.width << roi.height;
     }
 
@@ -50,7 +50,8 @@ public slots:
         return 1;
     }
 
-    int proc(int p1, void *p2){
+private:
+    int iproc(int p1, void *p2){
 
         int t_cvt = (p1 <= 0) ? cvt : p1;
         Mat *src = (Mat *)p2;

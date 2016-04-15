@@ -345,6 +345,7 @@ public slots:
             break;
             case VI_PLC_PC_BACKGROUND:
             {
+                log += QString("<--rx: BACKGROUND\r\n");
                 error_mask = VI_ERR_OK;
                 if(on_background()){
 
@@ -477,12 +478,12 @@ public slots:
         emit present_preview(snapshot, 0, 0);    //vizualizace preview kamery
 
         //process measurement or save new background
-        cv::Mat src(info.h, info.w, CV_8UC4, img);
+        cv::Mat src(info.h, info.w, CV_8U, img);
         int order = (background) ? t_vi_proc_sub_backgr::SUBBCK_REFRESH : t_vi_proc_sub_backgr::SUBBCK_SUBSTRACT;
         re.proc(order, &src);
 
         //alespon rekrifikovany obrazek
-        QImage output(re.out.data, re.out.cols, re.out.rows, QImage::Format_RGB32);
+        QImage output(re.out.data, re.out.cols, re.out.rows, QImage::Format_Indexed8);
         emit present_meas(output, 0, 0);  //vizualizace mereni
 
         //calc average brightness
@@ -616,8 +617,7 @@ public:
     {
         //zretezeni analyz
         QObject::connect(&re, SIGNAL(next(int, void *)), &bc, SLOT(proc(int, void *)));
-        QObject::connect(&bc, SIGNAL(next(int, void *)), &ct, SLOT(proc(int, void *)));
-        QObject::connect(&ct, SIGNAL(next(int, void *)), &th, SLOT(proc(int, void *)));
+        QObject::connect(&bc, SIGNAL(next(int, void *)), &th, SLOT(proc(int, void *)));
         QObject::connect(&th, SIGNAL(next(int, void *)), &ms, SLOT(proc(int, void *)));
 
         /*! pokud je potreba je mozne mezi analyzy vstoupit slotem intercept(int, void *)

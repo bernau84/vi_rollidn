@@ -36,6 +36,7 @@ public:
     t_vi_proc_sub_backgr(const QString &path = proc_sub_backgr_defconfigpath):
         i_proc_stage(path)
     {
+        fancy_name = "subst-background(" + fancy_name + ")";
         reload(0);
         qDebug() << "Sub background image / light-threshold / dark-threshold:" << bpath << bck_lighter_thresh << bck_darker_thresh;
     }
@@ -68,7 +69,8 @@ public slots:
         return 1;
     }
 
-    int proc(int p1, void *p2){
+private:
+    int iproc(int p1, void *p2){
 
         //const char *std_bpath = "c:\\Users\\bernau84\\Documents\\sandbox\\roll_idn\\build-processing-Desktop_Qt_5_4_1_MSVC2010_OpenGL_32bit-Debug\\debug\\back.bmp";
         //const char *std_bpath = "c:\\Users\\bernau84\\Pictures\\trima_daybackground\\trn_bck_exp1_1.bmp";
@@ -91,9 +93,47 @@ public slots:
             return 0;  //neni co pocitat
         }
 
-        //sjednoceni formatu
-        Mat inp; cvtColor(tsrc, inp, CV_BGR2RGB);
-        Mat bck; //cvtColor(tbck, bck, CV_BGR2RGB);
+        Mat inp = tsrc; //drive zde byla take converze barev
+        Mat bck;
+
+        //sjednoceni formatu - menime format pozadi, pokud nejake je
+        //podporuje ale jen jednoduche 1 nebo 3 kanaly
+        int desired = tsrc.channels();
+        int available = tbck.channels();
+
+        if(!tbck.empty()){
+
+            bck = tbck;
+            switch(available){
+                case 1:
+                    if(desired == 3) cvtColor(tbck, bck, CV_GRAY2RGB);
+                    else if(desired == 4) cvtColor(tbck, bck, CV_GRAY2RGBA);
+                    else {
+                        qDebug() << "t_vi_proc_sub_background input format error(-1) (1,3,4 channels are supported only)!";
+                        return 0;
+                    }
+                break;
+                case 3:
+                    if(desired == 1) cvtColor(tbck, bck, CV_RGB2GRAY);
+                    else if(desired == 4) cvtColor(tbck, bck, CV_RGB2BGRA);
+                    else {
+                        qDebug() << "t_vi_proc_sub_background input format error(-2)  (1,3,4 channels are supported only)!";
+                        return 0;
+                    }
+                break;
+                case 4:
+                    if(desired == 1) cvtColor(tbck, bck, CV_RGBA2GRAY);
+                    else if(desired == 3) cvtColor(tbck, bck, CV_RGBA2BGR);
+                    else {
+                        qDebug() << "t_vi_proc_sub_background input format error(-3) (1,3,4 channels are supported only)!";
+                        return 0;
+                    }
+                break;
+                default:
+                    qDebug() << "t_vi_proc_sub_background background format error (1,3,4 channels are supported only)!";
+                    return 0;  //neni s cim pocitat
+            }
+        }
 
         switch(tord){
 
@@ -106,16 +146,10 @@ public slots:
                     bck = inp;
                 } else {
 
-                    //todo - nefunguje, svetle plochy postupne saturuji
+                    //FIXME: nefunguje, svetle plochy postupne saturuji
                     //otazka jestli to budem moct pouzit s promennou ecpozici
                     //stejne ne
-                    cvtColor(tbck, bck, CV_BGR2RGB);  //stejny format jako imp!
-                    Mat dif(inp.rows, inp.cols, CV_32SC3);
-                    Mat sbck(inp.rows, inp.cols, CV_32SC3); sbck = bck;
-                    subtract(sbck, inp, dif);  //rozdil potrebujem znamenkovy
-                    dif /= bck_avr;
-                    sbck += dif; //pak bude prumerovani fungovat
-                    bck = sbck;
+                    //bck += (inp - bck) / 2;
                 }
 
                 imwrite(std_bpath, bck);
@@ -125,19 +159,18 @@ public slots:
             default:  //normalni mode
 
                 if(tbck.empty() ||
-                        tbck.cols != tsrc.cols ||
-                        tbck.rows != tsrc.rows ){
+                   tbck.cols != tsrc.cols ||
+                   tbck.rows != tsrc.rows ){
 
                     emit next(0, &tsrc);
                     return 0;
                 }
 
-                cvtColor(tbck, bck, CV_BGR2RGB);
                 break;
         }
 
 
-        Mat out(inp.rows, inp.cols, CV_8UC3);
+        Mat out(inp.rows, inp.cols, (inp.channels() == 1) ? CV_8U : CV_8UC3);
 
         int L1 = bck_lighter_thresh;  //pozadi svetlejsi nez L1 je nahrazeno 0
         int L2 = bck_darker_thresh;  //popredi svetlejsi nez L2 zustava nezmeneno
@@ -147,10 +180,23 @@ public slots:
 
         for(int y = 0; y < inp.rows; y++)
             for(int x = 0; x < inp.cols; x++)
-                for(int r=0; r < 3; r++){ //pres barvicky
+                for(int r=0; r < inp.channels(); r++){ //pres barvicky
 
-                    uchar c = inp.at<cv::Vec3b>(y,x)[r];  //mereni
-                    uchar b = bck.at<cv::Vec3b>(y,x)[r];  //pozadi
+                    uchar c, b;
+                    switch(inp.channels()){
+                            case 4:
+                                c = inp.at<cv::Vec4b>(y,x)[r];  //mereni
+                                b = bck.at<cv::Vec4b>(y,x)[r];  //pozadi
+                            break;
+                            case 3:
+                                c = inp.at<cv::Vec3b>(y,x)[r];  //mereni
+                                b = bck.at<cv::Vec3b>(y,x)[r];  //pozadi
+                            break;
+                            case 1:
+                                c = inp.at<uchar>(y,x);  //mereni
+                                b = bck.at<uchar>(y,x);  //pozadi
+                            break;
+                    }
                     int d = (int)c - (int)b; //vysledek
 
                     //baze pravidel pro odecitani pozadi
@@ -165,7 +211,15 @@ public slots:
                     }
 
                     if((d *= 2) > 255) d = 255;
-                    out.at<cv::Vec3b>(y,x)[r] = d;
+
+                    switch(out.channels()){
+                            case 4: //na vystupo podporujem jen 1 nebo 3 kanalovy obrazek
+                            case 3:
+                                if(r < 3) out.at<cv::Vec3b>(y,x)[r] = d;
+                            break;
+                            case 1: out.at<uchar>(y,x) = d; break;
+                    }
+
                 }
 
         emit next(0, &out);

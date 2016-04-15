@@ -33,6 +33,7 @@ public:
     t_vi_proc_statistic(const QString &path = proc_colortransf_defconfigpath):
         i_proc_stage(path)
     {
+        fancy_name = "image-statistics(" + fancy_name + ")";
         reload(0);
     }
 
@@ -47,7 +48,8 @@ public slots:
         return 1;
     }
 
-    int proc(int p1, void *p2){
+private:
+    int iproc(int p1, void *p2){
 
         t_vi_proc_statistic_ord ord = (t_vi_proc_statistic_ord)p1;
         Mat *src = (Mat *)p2;

@@ -4,14 +4,20 @@
 #include <QObject>
 #include <QFile>
 #include <QJsonDocument>
+#include <QElapsedTimer>
 
 #include "../t_vi_setup.h"
+
+static int stage_counter = 0;
 
 class i_proc_stage : public QObject
 {
     Q_OBJECT
 
 private:
+    //data processing
+    virtual int iproc(int p1, void *p2) = 0;
+
     //constructor helpers
     QJsonObject __set_from_file(const QString &path){
 
@@ -34,10 +40,22 @@ private:
 
 protected:
    t_collection par;
+   QElapsedTimer timer;
+   qint64 elapsed;
+   QString fancy_name;
 
 public slots:
    //data processor
-   virtual int proc(int p1, void *p2) = 0;
+   int proc(int p1, void *p2){
+
+       timer.start();
+       int ret = iproc(p1, p2);
+       elapsed = timer.elapsed();
+
+       qDebug() << QString("processssing %1 take %2ms").arg(fancy_name).arg(elapsed);
+       return ret;
+   }
+
    //init privtaes from configuration
    virtual int reload(int p) = 0;
 
@@ -65,10 +83,17 @@ public:
         return par[name].get().toVariant();
     }
 
+    double get_last_procesed_mstime(){
+
+        return elapsed / 1000.0;
+    }
+
     i_proc_stage(const QString &js_config, QObject *parent = NULL):
         QObject(parent),
         par(__set_from_file(js_config))
     {
+        fancy_name = QString("stage%1").arg(stage_counter++);
+        elapsed = 0;
     }
 
     virtual ~i_proc_stage(){;}

@@ -9,7 +9,7 @@ class t_vi_camera_offline_file : public i_vi_camera_base
 {
 public:
 
-    int snap(void *img, unsigned free, i_vi_camera_base::t_campic_info *info = NULL){
+    int isnap(void *img, unsigned free, i_vi_camera_base::t_campic_info *info = NULL){
 
         QString picName = QFileDialog::getOpenFileName(NULL, "Open Image", "", "Image Files (*.png *.jpg *.bmp)");
         if(picName.isNull())
