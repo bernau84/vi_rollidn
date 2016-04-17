@@ -19,16 +19,28 @@ public:
         if(picFile.isNull())
             return 0;
 
-        int ret = picFile.byteCount();
-        if(ret > (int)free)
-            return -1;
+        QImage picRGBA = picFile.convertToFormat(QImage::Format_RGB32); //vzdy protoze z nej umim udelat grayscale, nebo to zustane tak jak je
 
-        qDebug() << "file-pic-size:" << ret <<
-                    "file-pic-x:" << picFile.width() <<
-                    "file-pic-y:" << picFile.height();
+        qDebug() << "file-pic-size:" << picRGBA.byteCount() <<
+                    "file-pic-x:" << picRGBA.width() <<
+                    "file-pic-y:" << picRGBA.height();
+
+        t_campic src, out;
+
+        out.p = img;
+        out.size = free;
+
+        src.p = picRGBA.bits();
+        src.size = picRGBA.byteCount();
+        src.t.format = CAMF_32bRGB;
+        src.t.w = picRGBA.width();
+        src.t.h = picRGBA.height();
+
 
         /*! convertToFormat() according to setup */
-        return convertf(picFile, img, free, info);
+        int ret = convertf(src, out);
+        if(info) *info = out.t;
+        return ret;
     }
 
     t_vi_camera_offline_file()

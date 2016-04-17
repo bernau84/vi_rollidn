@@ -95,7 +95,7 @@ public:
 
     /*! \todo - merime ne podle celkove expozicni doby ale podle jasu na ROI
      */
-    int64_t exposure(int64_t time, e_cam_value act = CAMVAL_UNDEF){
+    int64_t exposure(int64_t time, e_camvalue act = CAMVAL_UNDEF){
 
         if(act == CAMVAL_ABS){
 
@@ -202,20 +202,30 @@ public:
                     // Display the grabbed image.
                     Pylon::DisplayImage(1, ptrGrabResult);
 #endif
+                    t_campic src, out;
 
-                    QImage src;
+                    out.p = img;
+                    out.size = free;
+
+                    src.p = (void *)pImageBuffer;
+                    src.size = ptrGrabResult->GetImageSize();
+                    src.t.w = ptrGrabResult->GetWidth();
+                    src.t.h = ptrGrabResult->GetHeight();
+
                     switch(ptrGrabResult->GetPixelType()){
 
                         case PixelType_Mono8:
-                            src = QImage(pImageBuffer, ptrGrabResult->GetWidth(), ptrGrabResult->GetHeight(),
-                                                   QImage::Format_Indexed8);
+                            src.t.format = CAMF_8bMONO;
                         break;
                         default:   //dodelat podporu rgb pokud bude potreba, bayerovych masek respektive
                             return -101;
                         break;
                     }
 
-                    return convertf(src, img, free, info);
+                    //vystup muze byt pozadvan v jime formatu - dano konfiguraci
+                    int ret = convertf(src, out);
+                    if(info) *info = out.t;
+                    return ret;
                 }
                 else
                 {

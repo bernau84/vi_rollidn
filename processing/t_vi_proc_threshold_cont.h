@@ -103,12 +103,12 @@ private:
         if(maxContRect.center.x * maxContRect.center.y == 0)
             return 0;  //zadny emit - koncime
 
-        /// Show in a window
-        Mat resized;
-        resize(*src, resized, Size(), 0.5, 0.5);
-        cv::namedWindow("Contours/BoundRect", CV_WINDOW_AUTOSIZE);
-        cv::imshow("Contours/BoundRect", resized);
-        cv::resizeWindow("Contours/BoundRect", resized.cols, resized.rows);
+//        /// Show in a window
+//        Mat resized;
+//        resize(*src, resized, Size(), 0.5, 0.5);
+//        cv::namedWindow("Contours/BoundRect", CV_WINDOW_AUTOSIZE);
+//        cv::imshow("Contours/BoundRect", resized);
+//        cv::resizeWindow("Contours/BoundRect", resized.cols, resized.rows);
 
         qDebug() << "pre_rows" << QString::number(src->rows);
         qDebug() << "pre_clms" << QString::number(src->cols);
@@ -145,6 +145,7 @@ private:
 //        cv::imshow("Orto/Croped", out);
 //        //cv::resizeWindow("Orto/Croped", out.cols, out.rows);
 
+        elapsed = etimer.elapsed();
         emit next(1, &out);
         return 1;
     }

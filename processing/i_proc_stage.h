@@ -40,7 +40,7 @@ private:
 
 protected:
    t_collection par;
-   QElapsedTimer timer;
+   QElapsedTimer etimer;
    qint64 elapsed;
    QString fancy_name;
 
@@ -48,15 +48,19 @@ public slots:
    //data processor
    int proc(int p1, void *p2){
 
-       timer.start();
+        //FIXME: musi byt v ramci iproc + emit by se melo naopak delat v ramci slotu!
+            //iproc musi vracet p1, p2 pro emitovani signalu (pripadne chybu ze se emitovat nebude)
+
+       etimer.start();
        int ret = iproc(p1, p2);
-       elapsed = timer.elapsed();
+       if(elapsed == 0)
+           elapsed = etimer.elapsed();
 
        qDebug() << QString("processssing %1 take %2ms").arg(fancy_name).arg(elapsed);
        return ret;
    }
 
-   //init privtaes from configuration
+   //init privates from configuration
    virtual int reload(int p) = 0;
 
 signals:

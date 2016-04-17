@@ -66,6 +66,7 @@ private:
             out = cropped.clone();   //deep copy
         }
 
+        elapsed = etimer.elapsed();
         emit next(1, &out);
         return 1;
     }

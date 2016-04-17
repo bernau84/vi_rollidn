@@ -94,6 +94,7 @@ private:
             break;
         }
 
+        elapsed = etimer.elapsed();
         emit next(1, &out);
         return 1;
     }

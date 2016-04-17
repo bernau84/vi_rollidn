@@ -25,6 +25,8 @@ private:
 
     int bck_avr;
     int bck_num;
+
+    Mat out;
 public:
 
     enum t_vi_proc_sub_backgr_ord {
@@ -162,6 +164,7 @@ private:
                    tbck.cols != tsrc.cols ||
                    tbck.rows != tsrc.rows ){
 
+                    elapsed = etimer.elapsed();
                     emit next(0, &tsrc);
                     return 0;
                 }
@@ -170,7 +173,7 @@ private:
         }
 
 
-        Mat out(inp.rows, inp.cols, (inp.channels() == 1) ? CV_8U : CV_8UC3);
+        out = Mat(inp.rows, inp.cols, (inp.channels() == 1) ? CV_8U : CV_8UC3);
 
         int L1 = bck_lighter_thresh;  //pozadi svetlejsi nez L1 je nahrazeno 0
         int L2 = bck_darker_thresh;  //popredi svetlejsi nez L2 zustava nezmeneno
@@ -210,18 +213,16 @@ private:
                         if((c > L2) && (d > L2)) d = c; //popredi vyznamne a rozdil velky - kasle na nej
                     }
 
-                    if((d *= 2) > 255) d = 255;
+                    //if((d *= 2) > 255) d = 255;
 
                     switch(out.channels()){
                             case 4: //na vystupo podporujem jen 1 nebo 3 kanalovy obrazek
-                            case 3:
-                                if(r < 3) out.at<cv::Vec3b>(y,x)[r] = d;
-                            break;
+                            case 3: if(r < 3) out.at<cv::Vec3b>(y,x)[r] = d;  break;
                             case 1: out.at<uchar>(y,x) = d; break;
                     }
-
                 }
 
+        elapsed = etimer.elapsed();
         emit next(0, &out);
         return 1;
     }

@@ -3,10 +3,10 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <time.h>
 #include "t_camera_attrib.h"
 
 #include <QImage>
-#include <QElapsedTimer>
 
 using namespace std;
 
@@ -21,9 +21,18 @@ public:
         CAMSTA_ERROR
     } sta;
 
+    /*! porpodrovane formaty s kterymi pracuje na vstupu a na ktere umi konvertovat
+     */
+    enum e_camformat {
+
+      CAMF_UNDEF = 0,
+      CAMF_8bMONO = 1,
+      CAMF_32bRGB
+    };
+
     /*! tyka se metody exposition()
      */
-    enum e_cam_value {
+    enum e_camvalue {
 
         CAMVAL_UNDEF = 0,
         CAMVAL_ABS = 1,
@@ -35,14 +44,19 @@ public:
 
         unsigned h;
         unsigned w;
-        unsigned format;
+        e_camformat format;
     };
 
+    struct t_campic {
+
+        t_campic_info t;
+        unsigned size;
+        void    *p;
+    };
 
 protected:
-    QElapsedTimer etimer;
-    qint64 conv_elapsed;
-    qint64 snap_elapsed;
+    uint32_t conv_elapsed;
+    uint32_t snap_elapsed;
     t_vi_camera_attrib par;     //camera attributes
 
     /*! \brief interface for taking pictures */
@@ -64,49 +78,89 @@ protected:
         return val.get();
     }
 
-    int convertf(QImage &src, void *img, unsigned free, t_campic_info *info){
+    int convertf(t_campic &inp, t_campic &out){
 
         int ret = 0;
-        QImage dest;
 
-        etimer.start();
+        clock_t start = clock();
+
+        uint8_t *po = (uint8_t *)out.p;
+        uint8_t *pi = (uint8_t *)inp.p;
+
+        //jak by to melo dopadnout + size nechavame na zadane hodntoe
+        //skutecna velikost se vraci jako navratova hodnota
+        out.t.w = inp.t.w;  //resizing se neprovadi - todo? k zamysleni
+        out.t.h = inp.t.h;
+        out.t.format = CAMF_UNDEF;
 
         QString f = par["pic-format"].get().toString();  //pozadovany format
-        if(0 == f.compare("8bMONO")){
+        if((0 == f.compare("8bMONO")) && (inp.t.format == CAMF_32bRGB)){
 
-            dest = src.convertToFormat(QImage::Format_Indexed8);
-        } else if(0 == f.compare("32bRGB")){
+            //pres Qt by to vypadalo nejak tak
+            //dest = src.convertToFormat(QImage::Format_Grayscale8); je az v Qt5.6
 
-            dest = src.convertToFormat(QImage::Format_RGB32);
-        } else { //beze zmeny - jek to prekopiruju
+            if((int)out.size < (ret = (inp.t.h * inp.t.w))){ //nemame dostatecny prostor
 
-            dest = src;
+                ret = -ret;
+            } else {
+
+                out.t.format = CAMF_8bMONO;
+                for(unsigned x=0; x < inp.t.w; x++)
+                    for(unsigned y=0; y < inp.t.h; y++){
+
+                        //itu recomandation Red * 0.3 + Green * 0.59 + Blue * 0.11
+                        uint32_t acc = 30 * pi[0] + 59 * pi[1] + 11 * pi[2];  //simple stupid - bez vazeni
+                        *po++ = acc / 100;
+                        pi += 4; //alfa kanal nezajima
+                    }
+            }
+
+        } else if((0 == f.compare("32bRGB")) && (inp.t.format == CAMF_8bMONO)){
+
+
+            //QImage dest = src.convertToFormat(QImage::Format_RGB32); - az budu mit Qt 5.6
+
+            if((int)out.size < (ret = 4 * (inp.t.h * inp.t.w))){ //nemame dostatecny prostor
+
+                ret = -ret;
+            } else {
+
+                out.t.format = CAMF_32bRGB;
+                for(unsigned x=0; x < inp.t.w; x++)
+                    for(unsigned y=0; y < inp.t.h; y++){
+
+                        *po++ = *pi;
+                        *po++ = *pi;
+                        *po++ = *pi++;
+                        *po++ = 0; //alfa kanal nezajima
+                    }
+            }
+
+        } else { //beze zmeny - jen to prekopiruju
+
+            out.t.format = inp.t.format;
+            memcpy(po, pi, inp.size);
         }
 
-        conv_elapsed = etimer.elapsed();
+#ifdef QT_DEBUG
+        QImage img;
+        if(out.t.format == CAMF_8bMONO){
+
+            img = QImage((uchar *)out.p, out.t.w, out.t.h, QImage::Format_Indexed8);
+            QVector<QRgb> gr_table;
+            for(int i = 0; i < 256; i++) gr_table.push_back(qRgb(i,i,i));
+            img.setColorTable(gr_table);
+        } else if(out.t.format == CAMF_32bRGB){
+
+            img = QImage((uchar *)out.p, out.t.w, out.t.h, QImage::Format_RGB32);
+        }
+
+        img.save("cam-conversion.bmp");
+#endif //QT_DEBUG
+
+        clock_t stop = clock();
+        conv_elapsed = ((stop - start) * 1000.0) / CLOCKS_PER_SEC;
         qDebug() << QString("img-conversion takes %1ms").arg(conv_elapsed);
-
-
-        if((int)free < (ret = dest.byteCount())) //nemame dostatecny prostor
-            return -ret;
-
-        if(img){
-
-            const uchar *dest_p = dest.bits();  //dest.constBits();
-            memcpy(img, dest_p, ret);
-        }
-
-        /*! \todo - anotrher transformation postprocessb
-         * roi & contrast etc according to manual settup (if choosen)
-         */
-
-        if(info){
-
-            info->format = (unsigned)dest.format();
-            info->w = src.width();
-            info->h = src.height();
-        }
-
         return ret;  //povedlo se
     }
 
@@ -119,7 +173,7 @@ public:
     }
 
     /*! \brief exposition control */
-    virtual int64_t exposition(int64_t time, e_cam_value act = CAMVAL_UNDEF){
+    virtual int64_t exposition(int64_t time, e_camvalue act = CAMVAL_UNDEF){
 
         Q_UNUSED(time)
         Q_UNUSED(act)
@@ -129,9 +183,10 @@ public:
     /*! \brief picture acquisition according to current t_vi_camera_attrib */
     int snap(void *img, unsigned free, t_campic_info *info = NULL){
 
-        etimer.start();
+        clock_t start = clock();
         int ret = isnap(img, free, info);
-        snap_elapsed = etimer.elapsed();
+        clock_t stop = clock();
+        snap_elapsed = ((stop - start) * 1000.0) / CLOCKS_PER_SEC;
         qDebug() << QString("img-snapshot takes %1ms").arg(snap_elapsed);
         return ret;
     }

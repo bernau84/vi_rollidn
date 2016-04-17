@@ -389,7 +389,7 @@ private:
                     ", radius" << QString::number(eliptic_right_radius);
 
         if(eliptic.right_corr <= 1e-6 && eliptic_right_radius <= 1e-6){
-            //emit next(1, src);
+            //emit next(1, src);            
             return 0;//koncime zadny emit - nepovedlo se; zbuchlo byt o pri pokusu vykreslit elipsu
         }
 
@@ -418,15 +418,16 @@ private:
             QString("(+/-%1 on left, +/-%2 on right)").arg(eliptic.left_err).arg(eliptic.right_err);
 
         //vizualizace
-        Mat resized;
-        resize(loc, resized, Size(), 0.5, 0.5);
-        cv::namedWindow("Roll-approximation", CV_WINDOW_AUTOSIZE);
-        cv::imshow("Roll-approximation", resized);
-        cv::resizeWindow("Roll-approximation", resized.cols, resized.rows);
+//        Mat resized;
+//        resize(loc, resized, Size(), 0.5, 0.5);
+//        cv::namedWindow("Roll-approximation", CV_WINDOW_AUTOSIZE);
+//        cv::imshow("Roll-approximation", resized);
+//        cv::resizeWindow("Roll-approximation", resized.cols, resized.rows);
 
 //        cv::namedWindow("Roll-original", CV_WINDOW_AUTOSIZE);
 //        cv::imshow("Roll-original", out);
 
+        elapsed = etimer.elapsed();
         emit next(1, src);
         return 1;
     }

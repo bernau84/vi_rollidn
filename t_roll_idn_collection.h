@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QEventLoop>
+#include <QElapsedTimer>
 
 #include <stdio.h>
 
@@ -36,6 +37,9 @@ class t_roll_idn_collection : public QObject {
     Q_OBJECT
 
 private:
+
+    QElapsedTimer etimer;
+    QElapsedTimer ptimer;
 
     QImage snapshot;
     QString path;
@@ -277,6 +281,8 @@ public slots:
                 .arg(ord_st.width / 10.0)
                 .arg(ord_st.height / 10.0);
 
+        etimer.start();
+
         switch(ord){
 
             case VI_PLC_PC_TRIGGER: //meas
@@ -422,7 +428,9 @@ public slots:
             break;
         }
 
+        log += QString("command time %1ms\r\n").arg(etimer.elapsed());
         store.append(log);
+
         return 0;
     }
 
@@ -430,7 +438,15 @@ public slots:
     //volame zatim rucne
     int on_trigger(bool background = false){
 
-        uint8_t *img = (uint8_t *) new uint8_t[4 * 4000 * 3000];
+        const int img_reserved = 3000 * 2000;
+        uint8_t *img = (uint8_t *) new uint8_t[img_reserved];
+        if(!img){
+
+            error_mask |= VI_ERR_CAM_MEMORY;
+            log += QString("cam-error: alocation failed!");
+            return 0;
+        }
+
         i_vi_camera_base::t_campic_info info;
 
         //acquisition
@@ -439,11 +455,11 @@ public slots:
 
             if(cam_device.sta == i_vi_camera_base::CAMSTA_PREPARED){
 
-                pisize = cam_device.snap(img, 4000 * 3000 * 4, &info);
+                pisize = cam_device.snap(img, img_reserved, &info);
             } else {
 
                 error_mask |= VI_ERR_CAM_NOTFOUND;
-                pisize = cam_simul.snap(img, 4000 * 3000 * 4, &info);
+                pisize = cam_simul.snap(img, img_reserved, &info);
             }
 
             if((rep >= 5) || abort){
@@ -472,7 +488,16 @@ public slots:
             return 0;
         }
 
+        ptimer.start();
+
+
+        QVector<QRgb> colorTable;
+        for (int i = 0; i < 256; i++)
+            colorTable.push_back(QColor(i, i, i).rgb());
+
         snapshot = QImage(img, info.w, info.h, (QImage::Format)info.format);
+        snapshot.setColorTable(colorTable);
+
         store.insert(snapshot);
 
         emit present_preview(snapshot, 0, 0);    //vizualizace preview kamery
@@ -490,7 +515,9 @@ public slots:
         st.proc(t_vi_proc_statistic::STATISTIC_BRIGHTNESS, &src);
         act_luminance = st.out.at<float>(0); //extract luminance from output matrix
 
-        delete[] img;
+        if(img) delete[] img;
+
+        log += QString("analysis time %1ms\r\n").arg(ptimer.elapsed());
         return 1;
     }
 
