@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QEventLoop>
+#include <QElapsedTimer>
 
 #include <stdio.h>
 
@@ -36,6 +37,9 @@ class t_roll_idn_collection : public QObject {
     Q_OBJECT
 
 private:
+
+    QElapsedTimer etimer;
+    QElapsedTimer ptimer;
 
     QImage snapshot;
     QString path;
@@ -263,6 +267,8 @@ public slots:
     //slot co se zavola s prijmem povelu od plc
     int on_order(unsigned ord, QByteArray raw){
 
+        etimer.start();
+
         t_comm_binary_rollidn ord_st;
         memcpy(&ord_st, raw.data(), sizeof(t_comm_binary_rollidn));
 
@@ -345,6 +351,7 @@ public slots:
             break;
             case VI_PLC_PC_BACKGROUND:
             {
+                log += QString("<--rx: BACKGROUND\r\n");
                 error_mask = VI_ERR_OK;
                 if(on_background()){
 
@@ -421,6 +428,7 @@ public slots:
             break;
         }
 
+        log += QString("command time %1ms\r\n").arg(etimer.elapsed());
         store.append(log);
         return 0;
     }
@@ -431,6 +439,13 @@ public slots:
 
         uint8_t *img = (uint8_t *) new uint8_t[4 * 4000 * 3000];
         i_vi_camera_base::t_campic_info info;
+
+        if(!img){
+
+            error_mask |= VI_ERR_CAM_MEMORY;
+            log += QString("cam-error: alocation failed!");
+            return 0;
+        }
 
         //acquisition
         int pisize = 0;
@@ -471,6 +486,8 @@ public slots:
             return 0;
         }
 
+        ptimer.start();
+
         snapshot = QImage(img, info.w, info.h, (QImage::Format)info.format);
         store.insert(snapshot);
 
@@ -489,7 +506,9 @@ public slots:
         st.proc(t_vi_proc_statistic::STATISTIC_BRIGHTNESS, &src);
         act_luminance = st.out.at<float>(0); //extract luminance from output matrix
 
-        delete[] img;
+        if(img) delete[] img;
+        log += QString("analysis time %1ms\r\n").arg(ptimer.elapsed());
+
         return 1;
     }
 
