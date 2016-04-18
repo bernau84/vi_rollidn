@@ -418,11 +418,11 @@ private:
             QString("(+/-%1 on left, +/-%2 on right)").arg(eliptic.left_err).arg(eliptic.right_err);
 
         //vizualizace
-//        Mat resized;
-//        resize(loc, resized, Size(), 0.5, 0.5);
-//        cv::namedWindow("Roll-approximation", CV_WINDOW_AUTOSIZE);
-//        cv::imshow("Roll-approximation", resized);
-//        cv::resizeWindow("Roll-approximation", resized.cols, resized.rows);
+        Mat resized;
+        resize(loc, resized, Size(), 0.5, 0.5);
+        cv::namedWindow("Roll-approximation", CV_WINDOW_AUTOSIZE);
+        cv::imshow("Roll-approximation", resized);
+        cv::resizeWindow("Roll-approximation", resized.cols, resized.rows);
 
 //        cv::namedWindow("Roll-original", CV_WINDOW_AUTOSIZE);
 //        cv::imshow("Roll-original", out);

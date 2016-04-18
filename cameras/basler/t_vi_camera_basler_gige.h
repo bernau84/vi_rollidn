@@ -219,39 +219,20 @@ public:
                     cout << "basler-pic-padding: " << ptrGrabResult->GetPaddingX() << endl;
                     cout << "basler-pic-chunk: " << ptrGrabResult->IsChunkDataAvailable() << endl;
 
-                    /*! \todo - delame to pres soubor protoze QImage nezere
-                     * rozliseni ktere by nebylo delitene 4!...mno do budoucna musime prekopyrovat po pixlech
-                     * nebo na to jit pres nejaky mezi buffer s paddingem
-                     * src = QImage(pImageBuffer, ptrGrabResult->GetWidth(), ptrGrabResult->GetHeight(), QImage::Format_Indexed8);
-                     * const uint8_t *pImageBuffer = (uint8_t *) image.GetBuffer();
-                     * //const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
-                     *
-                     */
-
-                    image.AttachGrabResultBuffer(ptrGrabResult);
-                    image.Save(ImageFileFormat_Bmp, "gige-sample.bmp");
-                    image.Release();
-
-#if define PYLON_WIN_BUILD && define QT_DEBUG
-                    // Display the grabbed image.
-                    //Pylon::DisplayImage(1, ptrGrabResult);
-#endif
-
-                    QImage src;
                     switch(ptrGrabResult->GetPixelType()){
 
-                        case PixelType_Mono8: {
-
-                            src = QImage("gige-sample.bmp");
-                            //src.save("gige-snapshot.bmp");
-                        }
+                        case PixelType_Mono8:
+                            src.t.format = CAMF_8bMONO;
                         break;
                         default:   //dodelat podporu rgb pokud bude potreba, bayerovych masek respektive
                             return -101;
                         break;
                     }
 
-                    return convertf(src, img, free, info);
+                    //vystup muze byt pozadvan v jime formatu - dano konfiguraci
+                    int ret = convertf(src, out);
+                    if(info) *info = out.t;
+                    return ret;
                 }
                 else
                 {

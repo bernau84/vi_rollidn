@@ -138,8 +138,14 @@ protected:
 
         } else { //beze zmeny - jen to prekopiruju
 
-            out.t.format = inp.t.format;
-            memcpy(po, pi, inp.size);
+            if((int)out.size < (ret = inp.t.h * inp.t.w)){ //nemame dostatecny prostor
+
+                ret = -ret;
+            } else {
+
+                out.t.format = inp.t.format;
+                memcpy(po, pi, inp.size);
+            }
         }
 
 #ifdef QT_DEBUG
