@@ -419,10 +419,12 @@ private:
 
         //vizualizace
         Mat resized;
-        resize(loc, resized, Size(), 0.5, 0.5);
-        cv::namedWindow("Roll-approximation", CV_WINDOW_AUTOSIZE);
-        cv::imshow("Roll-approximation", resized);
-        cv::resizeWindow("Roll-approximation", resized.cols, resized.rows);
+        resize(loc, resized, Size((loc.cols/2) & ~0x3, (loc.rows/2) & ~0x3));
+        loc = resized;
+
+//        cv::namedWindow("Roll-approximation", CV_WINDOW_AUTOSIZE);
+//        cv::imshow("Roll-approximation", resized);
+//        cv::resizeWindow("Roll-approximation", resized.cols, resized.rows);
 
 //        cv::namedWindow("Roll-original", CV_WINDOW_AUTOSIZE);
 //        cv::imshow("Roll-original", out);
