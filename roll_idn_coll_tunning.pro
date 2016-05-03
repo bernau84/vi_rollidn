@@ -71,7 +71,8 @@ DEFINES += USE_USB
 #DEFINES += USE_GIGE
 
 RESOURCES += \
-    processing/defaults.qrc
+    processing/defaults.qrc \
+    graphics.qrc
 
 FORMS += \
     mainwindow.ui

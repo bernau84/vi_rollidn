@@ -7,27 +7,21 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>600</height>
+    <height>640</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QLabel" name="canvas">
+   <widget class="QLabel" name="preview">
     <property name="geometry">
      <rect>
       <x>0</x>
       <y>0</y>
       <width>801</width>
-      <height>551</height>
+      <height>301</height>
      </rect>
-    </property>
-    <property name="sizePolicy">
-     <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-      <horstretch>0</horstretch>
-      <verstretch>0</verstretch>
-     </sizepolicy>
     </property>
     <property name="text">
      <string/>
@@ -59,52 +53,13 @@
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QLabel" name="preview">
+   <widget class="QLabel" name="canvas">
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>380</y>
-      <width>171</width>
-      <height>171</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QLabel" name="preview_2">
-    <property name="geometry">
-     <rect>
-      <x>170</x>
-      <y>380</y>
-      <width>171</width>
-      <height>171</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QLabel" name="preview_3">
-    <property name="geometry">
-     <rect>
-      <x>340</x>
-      <y>380</y>
-      <width>171</width>
-      <height>171</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QLabel" name="preview_4">
-    <property name="geometry">
-     <rect>
-      <x>520</x>
-      <y>380</y>
-      <width>171</width>
-      <height>171</height>
+      <y>320</y>
+      <width>801</width>
+      <height>271</height>
      </rect>
     </property>
     <property name="text">
@@ -148,19 +103,6 @@
     </property>
     <property name="text">
      <string>ON_BACKGROUND</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushButton_4">
-    <property name="geometry">
-     <rect>
-      <x>660</x>
-      <y>140</y>
-      <width>121</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>ON_CALIBRATION</string>
     </property>
    </widget>
   </widget>

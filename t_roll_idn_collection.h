@@ -298,13 +298,7 @@ public slots:
                 QByteArray reply_by1((const char *)&reply_st1, sizeof(t_comm_binary_rollidn));
                 iface.on_write(reply_by1); //tx ack to plc
 
-                int res = on_trigger();
-                if(!res) res = on_trigger(); //opakujem 2x pokud se mereni nepovede
-
-                __eval_measurement_res();  //prepocet na mm
-
-                QImage output(ms.loc.data, ms.loc.cols, ms.loc.rows, QImage::Format_Indexed8);
-                emit present_meas(output, mm_length, mm_diameter);  //vizualizace mereni
+                int res = on_meas();
 
                 uint32_t s_dia = mm_diameter * 10;
                 uint32_t s_len = mm_length * 10;
@@ -490,12 +484,11 @@ public slots:
 
         ptimer.start();
 
-
         QVector<QRgb> colorTable;
         for (int i = 0; i < 256; i++)
             colorTable.push_back(QColor(i, i, i).rgb());
 
-        snapshot = QImage(img, info.w, info.h, (QImage::Format)info.format);
+        snapshot = QImage(img, info.w, info.h, QImage::Format_Indexed8);
         snapshot.setColorTable(colorTable);
 
         store.insert(snapshot);
@@ -507,10 +500,6 @@ public slots:
         int order = (background) ? t_vi_proc_sub_backgr::SUBBCK_REFRESH : t_vi_proc_sub_backgr::SUBBCK_SUBSTRACT;
         re.proc(order, &src);
 
-        //alespon rekrifikovany obrazek
-        QImage output(re.out.data, re.out.cols, re.out.rows, QImage::Format_Indexed8);
-        emit present_meas(output, 0, 0);  //vizualizace mereni
-
         //calc average brightness
         st.proc(t_vi_proc_statistic::STATISTIC_BRIGHTNESS, &src);
         act_luminance = st.out.at<float>(0); //extract luminance from output matrix
@@ -519,6 +508,35 @@ public slots:
 
         log += QString("analysis time %1ms\r\n").arg(ptimer.elapsed());
         return 1;
+    }
+
+    //obsahuje snimani obrazu a analyzu
+    int on_meas(void){
+
+        mm_diameter = 0;  //signal invalid measurement
+        mm_length = 0;
+
+        int res = on_trigger();
+        if(!res) res = on_trigger(); //opakujem 2x pokud se mereni nepovede
+        if(res){
+
+            __eval_measurement_res();  //prepocet na mm
+
+            QVector<QRgb> colorTable;
+            for (int i = 0; i < 256; i++)
+                colorTable.push_back(QColor(i, i, i).rgb());
+
+            //vizualizace mereni
+            QImage output(ms.loc.data, ms.loc.cols, ms.loc.rows, QImage::Format_Indexed8);
+            output.setColorTable(colorTable);
+            emit present_meas(output, mm_length, mm_diameter);
+        } else {
+
+            QImage output(":/error-498-fix.gif");
+            emit present_meas(output, mm_length, mm_diameter);
+        }
+
+        return res;
     }
 
     int on_abort(){
@@ -534,23 +552,28 @@ public slots:
 //        //zafixujeme nastaveni expozice a ulozime si referencni hodnotu jasu
 //        if(ref_luminance < 0){
 
-//            error_mask = VI_ERR_OK;
-//            if(cam_device.sta != i_vi_camera_base::CAMSTA_PREPARED){
+            error_mask = VI_ERR_OK;
+            if(cam_device.sta != i_vi_camera_base::CAMSTA_PREPARED){
 
-//                error_mask |= VI_ERR_CAM_NOTFOUND;
-//                return 0;
-//            } else if(cam_device.exposure(100, i_vi_camera_base::CAMVAL_AUTO_TOLERANCE)){ //100us tolerance to settling exposure
+                error_mask |= VI_ERR_CAM_NOTFOUND;
+                return 0;
+            }
 
-//                on_trigger(true); //true == background mode
-//                if(error_mask == VI_ERR_OK){
+//FIXME: zaremovano protoze zpusobovalo pady - takhle zustava ref-luminance zaporna a nic se proto
+            //se expozici za behu nedeje
 
-//                    last_luminance = ref_luminance = act_luminance;
-//                    return 1;
-//                }
+//            else if(cam_device.exposure(100, i_vi_camera_base::CAMVAL_AUTO_TOLERANCE)){ //100us tolerance to settling exposure
+
+//               on_trigger(true); //true == background mode
+//               if(error_mask == VI_ERR_OK){
+
+//                  last_luminance = ref_luminance = act_luminance;
+//                  return 1;
+//               }
 //            } else {
 
-//                error_mask |= VI_ERR_CAM_EXPOSITION;  //autoexpozice failovala
-//                return 0;
+//               error_mask |= VI_ERR_CAM_EXPOSITION;  //autoexpozice failovala
+//               return 0;
 //            }
 //        }
 
@@ -578,14 +601,29 @@ public slots:
                 nexpo = cam_device.exposure(nexpo, i_vi_camera_base::CAMVAL_ABS);
             } else if(dif_luminance < 0.95){  //moc svtele
 
-                mode = true;    //budem chti novy snime pozadi
+                mode = true;    //budem chtit novy snimek pozadi
                 //pomerove snizime expozici dolu
                 int64_t nexpo = exposition * dif_luminance;
                 nexpo = cam_device.exposure(nexpo, i_vi_camera_base::CAMVAL_ABS);
             }
         }
 
-        on_trigger(mode); //true == background mode
+        if(on_trigger(mode)){ //true == background mode
+
+            QVector<QRgb> colorTable;
+            for (int i = 0; i < 256; i++)
+                colorTable.push_back(QColor(i, i, i).rgb());
+
+            //alespon rekrifikovany obrazek
+            QImage output(re.out.data, re.out.cols, re.out.rows, QImage::Format_Indexed8);
+            output.setColorTable(colorTable);
+            emit present_meas(output, 0, 0);
+        } else {
+
+            QImage output(":/error-498-fix.gif");
+            emit present_meas(output, 0, 0);
+        }
+
         if(error_mask == VI_ERR_OK){
 
             last_luminance = act_luminance;

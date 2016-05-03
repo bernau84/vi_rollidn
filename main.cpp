@@ -67,6 +67,15 @@ int main(int argc, char *argv[])
     QObject::connect(&worker, SIGNAL(present_preview(QImage &,double,double)),    //vizualizace preview kamery
                      &w, SLOT(preview(QImage&,double,double)));
 
+    QObject::connect(&w, SIGNAL(on_trigger_button()),
+                     &worker, SLOT(on_meas()));  //snimek & analyza
+
+    QObject::connect(&w, SIGNAL(on_background_button()),
+                     &worker, SLOT(on_background()));  //novy snimek pozadi
+
+    QObject::connect(&w, SIGNAL(on_ready_button()),
+                     &worker, SLOT(on_ready()));  //kontrola kamery & nastaveni expozice pokud je podporovano
+
 #ifdef QT_DEBUG
  //  worker.on_trigger(); //start measuring
  //   worker.on_trigger(); //start measuring

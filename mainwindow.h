@@ -23,6 +23,10 @@ public slots:
     void measured(QImage &im, double length, double diameter);
     void preview(QImage &im, double length, double diameter);
 
+signals:
+    void on_ready_button();
+    void on_trigger_button();
+    void on_background_button();
 };
 
 #endif // MAINWINDOW_H
