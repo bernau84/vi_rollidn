@@ -22,7 +22,9 @@ int main(int argc, char *argv[])
     memset(&dgram, 0, sizeof(dgram));
 
     dgram.ord = 6;
-    rem_serv.query_command(QByteArray((char *)&dgram, sizeof(dgram)), 100);
+
+    QByteArray ba((char *)&dgram, sizeof(dgram));
+    rem_serv.query_command(ba, 100);
 //    //dgram.ord = 2;
 //    //loc_cli.query_command(QByteArray((char *)&dgram, sizeof(dgram)), 100);
 

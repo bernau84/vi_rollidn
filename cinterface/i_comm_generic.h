@@ -8,6 +8,7 @@
 #include <QString>
 #include <QStringList>
 #include <QDebug>
+#include <QMutex>
 #include <QWaitCondition>
 
 #include "i_comm_parser.h"

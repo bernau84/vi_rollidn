@@ -8,7 +8,7 @@
 using namespace cv;
 using namespace std;
 
-#include "t_vi_proc_roi_grayscale.h"
+#include "t_vi_proc_roi_colortransf.h"
 #include "t_vi_proc_threshold_cont.h"
 #include "t_vi_proc_roll_approx.h"
 #include "t_vi_proc_sub_background.h"

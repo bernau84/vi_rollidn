@@ -56,12 +56,12 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
     //t_vi_camera_basler_usb dev;
-    t_vi_camera_basler_gige deve;
-//    t_vi_camera_offline_file simul;
+//    t_vi_camera_basler_gige deve;
+    t_vi_camera_offline_file simul;
 //    t_vi_camera_web_usb inbuild;
 
-    deve.init();
-//    simul.init();
+//    deve.init();
+    simul.init();
 //    inbuild.init();
 
     uint8_t *img = (uint8_t *) new uint8_t[4000 * 3000];
@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 //    vizual1.setPixmap(QPixmap::fromImage(QImage(img, info.w, info.h, (QImage::Format)info.format)));
 //    vizual1.show();
 
-    deve.snap(img, 4000 * 3000, &info);
+    //deve.snap(img, 4000 * 3000, &info);
 
     //inbuild.snap(img, 4000 * 3000 * 4, &info);
 

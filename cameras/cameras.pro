@@ -40,5 +40,5 @@ HEADERS += \
 DISTFILES += \
     js_camera_base.txt
 
-#DEFINES += USE_USB
-DEFINES += USE_GIGE
+DEFINES += USE_USB
+#DEFINES += USE_GIGE

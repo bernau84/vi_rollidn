@@ -109,7 +109,7 @@ public:
 
     /*! \todo - merime ne podle celkove expozicni doby ale podle jasu na ROI
      */
-    int64_t exposure(int64_t time, e_cam_value act = CAMVAL_UNDEF){
+    int64_t exposure(int64_t time, i_vi_camera_base::e_camvalue act = CAMVAL_UNDEF){
 
         if(act == CAMVAL_ABS){
 

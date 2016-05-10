@@ -181,7 +181,8 @@ private:
         //substract background and saturate
         //cv::absdiff(imp, bck, out);
 
-        for(int y = 0; y < inp.rows; y++)
+        for(int y = 0; y < inp.rows; y++){
+
             for(int x = 0; x < inp.cols; x++)
                 for(int r=0; r < inp.channels(); r++){ //pres barvicky
 
@@ -221,6 +222,7 @@ private:
                             case 1: out.at<uchar>(y,x) = d; break;
                     }
                 }
+        }
 
         elapsed = etimer.elapsed();
         emit next(0, &out);
