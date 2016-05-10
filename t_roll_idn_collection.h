@@ -223,8 +223,8 @@ private:
                 if(z_param[1].isValid()){ //mame zpresnujici udaje o scene
 
                     // spocitame odhad vzdalenosti stredu role od opticke osy kamery
-                    double H = z_param[3].toDouble() - z_param[2].toDouble() - z_param[1].toDouble();
-                    double L = z_param[1].toDouble();
+                    //double H = z_param[3].toDouble() - z_param[2].toDouble() - z_param[1].toDouble();
+                    //double L = z_param[1].toDouble();
                     //double approx_z = sqrt(H*H + L*L);  ...vubec to nesedi - pouzijem prime odmereni stredu
 
                     double approx_z = 2040; //pro stredni prumer 256 raw pix
@@ -309,6 +309,7 @@ public slots:
                 iface.on_write(reply_by1); //tx ack to plc
 
                 int res = on_meas();
+                res = res;  //jen kvuli warningum
 
                 uint32_t s_dia = mm_diameter * 10;
                 uint32_t s_len = mm_length * 10;
