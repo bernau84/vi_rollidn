@@ -225,8 +225,18 @@ private:
                     // spocitame odhad vzdalenosti stredu role od opticke osy kamery
                     double H = z_param[3].toDouble() - z_param[2].toDouble() - z_param[1].toDouble();
                     double L = z_param[1].toDouble();
-                    double approx_z = 2050; //sqrt(H*H + L*L); - pro tenke
-                    //double approx_z = 1990; //tluste
+                    //double approx_z = sqrt(H*H + L*L);  ...vubec to nesedi - pouzijem prime odmereni stredu
+
+                    double approx_z = 2040; //pro stredni prumer 256 raw pix
+                        //hrube odmereno Docentem, doladeno z 2050 na 2040 experiemntalne
+                    //double approx_z = 1998; //pro tluste prumer 490 pax pix
+                        //experiemntalne
+
+                    //automaticka korekce mezi tlustou a tenkou roli
+                    double correction_z = 42.0 * ((256.0 - raw_diameter) / (490.0 - 256));
+                    approx_z += correction_z;
+
+                    log += QString("distance+correction %1\r\n").arg(approx_z);
 
                     mm_diameter = (approx_z * raw_diameter) / f_d;
                     mm_length = ((approx_z - mm_diameter/2) * raw_length) / f_l;
