@@ -8,7 +8,7 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
-VERSION = 2.10.5.10
+VERSION = 2.16.5.12
 
 SOURCES += main.cpp \
     mainwindow.cpp

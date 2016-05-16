@@ -357,6 +357,9 @@ public slots:
             case VI_PLC_PC_BACKGROUND:
             {
                 log += QString("<--rx: BACKGROUND\r\n");
+
+                store.increment();
+
                 error_mask = VI_ERR_OK;
                 if(on_background()){
 

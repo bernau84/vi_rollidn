@@ -4,27 +4,44 @@
 #include <QString>
 #include <QFile>
 #include <QLabel>
+#include <QTime>
+#include <QSettings>
+#include <QDir>
 
 #define RECORD_PATTERN_LOG  "log%1.txt"
 #define RECORD_PATTERN_IMG  "pic%1.bmp"
+#define RECORD_PATTERN_CNF  "log.cnf"
 
 class t_roll_idn_record_storage {
 
 private:
     QString m_storage_path;
+    QSettings m_cnf;
     int m_history;
     int m_counter;
 
 public:
     t_roll_idn_record_storage(QString storage_path, int history = 100):
         m_storage_path(storage_path),
+        m_cnf(m_storage_path + "/" + RECORD_PATTERN_CNF, QSettings::IniFormat),
         m_history(history)
     {
         m_counter = 0;
+
+        QDir dir(m_storage_path);
+        if (!dir.exists()){
+          dir.mkdir(".");
+        }
+
+        m_counter = m_cnf.value("LAST", m_counter).toInt();
+        m_history = m_cnf.value("HISTORY", m_history).toInt();
     }
 
-    ~t_roll_idn_record_storage(){
-
+    ~t_roll_idn_record_storage()
+    {
+        m_cnf.setValue("LAST", m_counter);
+        m_cnf.setValue("HISTORY", m_history);
+        m_cnf.sync();
     }
 
     void increment(){
@@ -32,18 +49,21 @@ public:
         m_counter = (m_counter + 1) % m_history;
 
         QString log_path = QString(RECORD_PATTERN_LOG).arg(m_counter);
-        QFile::remove(log_path);
+        QFile::remove(m_storage_path + "/" + log_path);
 
         QString img_path = QString(RECORD_PATTERN_IMG).arg(m_counter);
-        QFile::remove(img_path);
+        QFile::remove(m_storage_path + "/" + img_path);
     }
 
     void append(QString &log){
 
-        qDebug() << log;
+        QString stamp = QTime::currentTime().toString("hh:mm:ss.zzz");
+        qDebug() << stamp << "\r\n" << log;
 
-        QFile log_file(QString(RECORD_PATTERN_LOG).arg(m_counter));
+        QFile log_file(m_storage_path + "/" + QString(RECORD_PATTERN_LOG).arg(m_counter));
         log_file.open(QIODevice::Append | QIODevice::Text);
+        log_file.write(stamp.toLatin1());
+        log_file.write("\r\n");
         log_file.write(log.toLatin1());
         log_file.close();
     }
@@ -57,8 +77,7 @@ public:
             vizual.show();
 
             QString img_path = QString(RECORD_PATTERN_IMG).arg(m_counter);
-            QFile::remove(img_path);
-            img.save(img_path);
+            img.save(m_storage_path + "/" + img_path);
         }
     }
 
