@@ -177,23 +177,23 @@ private:
             error_mask |= VI_ERR_MEAS5;  //warning high diviation
         }
 
-        if(ms.eliptic.left_err < ms.midprof.left_err){
+//        if(ms.eliptic.left_err < ms.midprof.left_err){
 
-            log += QString("meas-warning: 6(elipses left fallback)\r\n");
-            error_mask |= VI_ERR_MEAS6;      //fallback to elipse method indication
+//            log += QString("meas-warning: 6(elipses left fallback)\r\n");
+//            error_mask |= VI_ERR_MEAS6;      //fallback to elipse method indication
 
-            raw_diameter = ms.midprof.diameter;
-            raw_length = th.maxContRect.size.width - ms.midprof.right_corr - ms.eliptic.left_corr;
-        }
+//            raw_diameter = ms.midprof.diameter;
+//            raw_length = th.maxContRect.size.height - ms.midprof.right_corr - ms.eliptic.left_corr;
+//        }
 
-        if(ms.eliptic.right_err < ms.midprof.right_err){
+//        if(ms.eliptic.right_err < ms.midprof.right_err){
 
-            log += QString("meas-warning: 7(elipses right fallback)\r\n");
-            error_mask |= VI_ERR_MEAS6;      //fallback to elipse method indication
+//            log += QString("meas-warning: 7(elipses right fallback)\r\n");
+//            error_mask |= VI_ERR_MEAS6;      //fallback to elipse method indication
 
-            raw_diameter = ms.midprof.diameter;  //elipsy vychazeji lepe - berem je
-            raw_length = th.maxContRect.size.width - ms.eliptic.right_corr - ms.midprof.left_corr;
-        }
+//            raw_diameter = ms.midprof.diameter;
+//            raw_length = th.maxContRect.size.height - ms.eliptic.right_corr - ms.midprof.left_corr;
+//        }
 
         if(overal_length_err_elipse < overal_length_err_midline){
 
@@ -234,12 +234,11 @@ private:
 
                     //automaticka korekce mezi tlustou a tenkou roli
                     double correction_z = 42.0 * ((256.0 - raw_diameter) / (490.0 - 256));
-                    approx_z += correction_z;
 
-                    log += QString("distance+correction %1\r\n").arg(approx_z);
+                    log += QString("distance %2 + correction %1\r\n").arg(approx_z);
 
-                    mm_diameter = (approx_z * raw_diameter) / f_d;
-                    mm_length = ((approx_z - mm_diameter/2) * raw_length) / f_l;
+                    mm_diameter = ((approx_z + correction_z) * raw_diameter) / f_d;
+                    mm_length = (((approx_z + correction_z) - mm_diameter/2) * raw_length) / f_l;
                 }
 
         } else if(ratio_l && ratio_d) {  //mame alespon hruby calibracni prepocet pix -> mm?
