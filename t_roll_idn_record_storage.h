@@ -26,9 +26,13 @@ private:
 public:
     t_roll_idn_record_storage(QString storage_path, int history = 100):
         m_storage_path(storage_path),
-        m_cnf(m_storage_path + "\\" + RECORD_PATTERN_CNF, QSettings::IniFormat),
+        m_cnf(m_storage_path + "/" + RECORD_PATTERN_CNF, QSettings::IniFormat),
         m_history(history)
     {
+
+        QString dpath = m_storage_path + "/" + RECORD_PATTERN_CNF;
+        qDebug() << "record-storage:" << dpath;
+
         m_counter = 0;
         m_stdout = 0;
 
@@ -40,6 +44,9 @@ public:
         m_counter = m_cnf.value("LAST", m_counter).toInt();
         m_history = m_cnf.value("HISTORY", m_history).toInt();
         m_stdout = m_cnf.value("STDCNT", m_stdout).toInt();
+
+        qDebug() << "record-storage:" << "import last/hist/stdcnt" <<
+                    m_counter << m_history << m_stdout;
 
         //vycte a pod unikatnim jmenem zkopiruje stdout z minula
         QFile pre_stdout(RECORD_LAST_STDOUT);
@@ -66,6 +73,9 @@ public:
     void increment(){
 
         m_counter = (m_counter + 1) % m_history;
+
+        qDebug() << "record-storage: counter inremented" <<
+                    m_counter;
 
         QString log_path = QString(RECORD_PATTERN_LOG).arg(m_counter);
         QFile::remove(m_storage_path + "/" + log_path);

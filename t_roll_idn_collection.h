@@ -693,6 +693,9 @@ public:
         iface(par["tcp-server-port"].get().toInt(), this),
         store(QDir::currentPath() + "/storage")
     {
+
+        //qDebug() << "Current-path: " << QDir::currentPath();
+
         //zretezeni analyz
         QObject::connect(&re, SIGNAL(next(int, void *)), &bc, SLOT(proc(int, void *)));
         QObject::connect(&bc, SIGNAL(next(int, void *)), &th, SLOT(proc(int, void *)));
