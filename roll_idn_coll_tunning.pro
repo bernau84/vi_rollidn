@@ -8,7 +8,7 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
-VERSION = 2.16.5.12
+VERSION = 2.20.5.15
 
 SOURCES += main.cpp \
     mainwindow.cpp
@@ -21,6 +21,13 @@ LIBS += -L"c:\Program Files\Basler\pylon 4\genicam\library\CPP\Lib\Win32_i86"
 
 
 INCLUDEPATH += "C:\\opencv\\build\\include"
+
+#LIBS += -L"C:\\opencv\\build\\x86\\vc10\\lib" \
+#    -lopencv_core2410d \
+#    -lopencv_highgui2410d \
+#    -lopencv_imgproc2410d \
+#    -lopencv_features2d2410d \
+#    -lopencv_calib3d2410d
 
 #kvuli releasu jsou to nedebugove knihovny
 #mozna kvuli tomu release padal, mozna chybely nakopirovat do system32

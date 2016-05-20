@@ -2,11 +2,67 @@
 #include <QProcessEnvironment>
 #include <QDebug>
 #include <QLabel>
+#include <QTimer>
+#include <QSettings>
 
-#include <stdio.h>
 #include "mainwindow.h"
 
 #include "t_roll_idn_collection.h"
+
+#include <stdio.h>
+
+//#include "t_redirect_stdout.h"
+//class RefreshStdout : public QTimer {
+//    Q_OBJECT
+
+//private:
+//    StdCapture redir;
+//    FILE *ofs;
+//    QSettings cnf;
+
+//    int counter;
+//    int history;
+
+//public:
+//    RefreshStdout():
+//        ofs(),
+//        cnf("stdout_cnf.ini", QSettings::IniFormat) {
+
+//        redir.BeginCapture();
+
+//        counter = 0;
+//        history = 100;
+
+//        counter = cnf.value("LAST", counter).toInt();
+//        history = cnf.value("HISTORY", history).toInt();
+
+//        char filename[64];
+//        snprintf(filename, sizeof(filename), "stdout%d.txt", counter);
+//        ofs = fopen(filename, std::ios::out);
+
+//        counter = (counter + 1) % history;
+
+//        cnf.setValue("LAST", counter);
+//        cnf.sync();
+
+//        setInterval(100);
+//    }
+
+//    ~RefreshStdout(){
+
+//        fclose(ofs);
+//        redir.EndCapture();
+//    }
+
+//    void timerEvent(QTimerEvent * e){
+
+//        e = e;
+//        writef(); ofs << redir.GetCapture();
+//    }
+
+//};
+
+//RefreshStdout logger;
 
 int main(int argc, char *argv[])
 {
